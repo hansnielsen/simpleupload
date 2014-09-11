@@ -28,7 +28,7 @@ public class UploadActivity extends Activity {
         final Intent intent = getIntent();
         // We have an image to upload, get list of images.
         if (Intent.ACTION_SEND.equals(intent.getAction())) {
-            Log.i(TAG, "Got send action");
+            Log.v(TAG, "Got send action");
 
             Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
             if (imageUri != null) {
@@ -37,7 +37,7 @@ public class UploadActivity extends Activity {
                 makeToast("No image provided to upload!");
             }
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())) {
-            Log.i(TAG, "Got multiple send action");
+            Log.v(TAG, "Got multiple send action");
 
             imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
         }
@@ -70,7 +70,7 @@ public class UploadActivity extends Activity {
                 makeToast("Uploading image!");
             }
             for (Uri imageUri : imageUris) {
-                Log.i(TAG, "Uploading image '" + imageUri + "'");
+                Log.d(TAG, "Uploading image '" + imageUri + "'");
             }
         }
 
