@@ -20,6 +20,28 @@ public class UploadActivity extends Activity {
         toast.show();
     }
 
+    // Removes URIs that are null or not openable.
+    void sanitizeUris(ArrayList<Uri> uris) {
+        Iterator<Uri> it = uris.iterator();
+        while (it.hasNext()) {
+            Uri uri = it.next();
+
+            if (uri == null) {
+                Log.d(TAG, "Removed null URI");
+                it.remove();
+                continue;
+            }
+
+            try {
+                AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(uri, "r");
+                desc.close();
+            } catch (Exception e) {
+                Log.d(TAG, "Couldn't open URI '" + uri + "'");
+                it.remove();
+            }
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,24 +65,7 @@ public class UploadActivity extends Activity {
         }
 
         // Sanitize the list of image URIs.
-        Iterator<Uri> it = imageUris.iterator();
-        while (it.hasNext()) {
-            Uri imageUri = it.next();
-
-            if (imageUri == null) {
-                Log.d(TAG, "Removed null URI");
-                it.remove();
-                continue;
-            }
-
-            try {
-                AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(imageUri, "r");
-                desc.close();
-            } catch (Exception e) {
-                Log.d(TAG, "Couldn't open URI '" + imageUri + "'");
-                it.remove();
-            }
-        }
+        sanitizeUris(imageUris);
 
         // Trigger the upload.
         if (imageUris != null && imageUris.size() > 0) {
