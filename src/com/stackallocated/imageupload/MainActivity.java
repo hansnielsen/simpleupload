@@ -9,23 +9,11 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private final static String TAG = "SimpleUpload";
+    private final static String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        final Intent intent = getIntent();
-        // We have an image to upload.
-        if (Intent.ACTION_SEND.equals(intent.getAction())) {
-            Log.i(TAG, "Got send action");
-            Toast toast = Toast.makeText(getApplicationContext(), "Uploading image!", Toast.LENGTH_SHORT);
-            toast.show();
-
-            // Upload never needs to show the UI.
-            finish();
-            return;
-        }
 
         setContentView(R.layout.activity_main);
     }
