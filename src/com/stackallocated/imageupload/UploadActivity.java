@@ -19,6 +19,10 @@ public class UploadActivity extends Activity {
             Log.i(TAG, "Got send action");
             Toast toast = Toast.makeText(getApplicationContext(), "Uploading image!", Toast.LENGTH_SHORT);
             toast.show();
+        } else if (Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())) {
+            Log.i(TAG, "Got multiple send action");
+            Toast toast = Toast.makeText(getApplicationContext(), "Multiple images unsupported!", Toast.LENGTH_SHORT);
+            toast.show();
         }
 
         // This activity never needs to show the UI.
