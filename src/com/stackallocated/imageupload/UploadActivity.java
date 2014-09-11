@@ -2,8 +2,11 @@ package com.stackallocated.imageupload;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,6 +40,26 @@ public class UploadActivity extends Activity {
             Log.i(TAG, "Got multiple send action");
 
             imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+        }
+
+        // Sanitize the list of image URIs.
+        Iterator<Uri> it = imageUris.iterator();
+        while (it.hasNext()) {
+            Uri imageUri = it.next();
+
+            if (imageUri == null) {
+                Log.d(TAG, "Removed null URI");
+                it.remove();
+                continue;
+            }
+
+            try {
+                AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(imageUri, "r");
+                desc.close();
+            } catch (Exception e) {
+                Log.d(TAG, "Couldn't open URI '" + imageUri + "'");
+                it.remove();
+            }
         }
 
         // Trigger the upload.
