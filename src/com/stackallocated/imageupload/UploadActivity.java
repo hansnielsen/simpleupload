@@ -70,8 +70,14 @@ public class UploadActivity extends Activity {
             } else{
                 makeToast("Uploading image!");
             }
+
+            // Repeated intent creation is so that killing of the upload
+            // service doesn't require fancy handling of intents.
             for (Uri imageUri : imageUris) {
-                Log.d(TAG, "Uploading image '" + imageUri + "'");
+                Log.d(TAG, "Enqueuing image '" + imageUri + "'");
+                Intent i = new Intent(this, UploadService.class);
+                i.putExtra(Intent.EXTRA_STREAM, imageUri);
+                startService(i);
             }
         } else {
             makeToast("No images to upload!");
