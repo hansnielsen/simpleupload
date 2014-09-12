@@ -53,18 +53,14 @@ public class UploadActivity extends Activity {
             Log.v(TAG, "Got send action");
 
             Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
-            if (imageUri != null) {
-                imageUris = new ArrayList<Uri>(Arrays.asList(imageUri));
-            } else {
-                makeToast("No image provided to upload!");
-            }
+            imageUris = new ArrayList<Uri>(Arrays.asList(imageUri));
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())) {
             Log.v(TAG, "Got multiple send action");
 
             imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
         }
 
-        // Sanitize the list of image URIs.
+        // Sanitize the list of image URIs by discarding null or unopenable ones.
         sanitizeUris(imageUris);
 
         // Trigger the upload.
@@ -77,6 +73,8 @@ public class UploadActivity extends Activity {
             for (Uri imageUri : imageUris) {
                 Log.d(TAG, "Uploading image '" + imageUri + "'");
             }
+        } else {
+            makeToast("No images to upload!");
         }
 
         // This activity never needs to show the UI.
