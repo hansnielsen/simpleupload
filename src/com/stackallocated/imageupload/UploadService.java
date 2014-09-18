@@ -1,10 +1,15 @@
 package com.stackallocated.imageupload;
 
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.HttpEntityWrapper;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
 import android.app.Service;
@@ -26,8 +31,57 @@ public class UploadService extends Service {
     private final static String TAG = "UploadService";
     private Handler handler;
 
-    private final static int UPLOAD_IMAGE = 1; 
-    
+    private final static int UPLOAD_IMAGE = 1;
+
+    public static interface ProgressListener {
+        void progress(long bytes);
+    }
+
+    class CountedOutputStream extends FilterOutputStream {
+        long bytes = 0;
+        ProgressListener listener;
+
+        public CountedOutputStream(OutputStream out, ProgressListener listener) {
+            super(out);
+            this.listener = listener;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            byte[] arr = new byte[]{(byte) b};
+            write(arr, 0, arr.length);
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            write(b, 0, b.length);
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            out.write(b, off, len);
+            bytes += len;
+            listener.progress(bytes);
+        }
+    }
+
+    class ProgressHttpEntityWrapper extends HttpEntityWrapper {
+        ProgressListener listener;
+
+        public ProgressHttpEntityWrapper(final HttpEntity entity, final ProgressListener listener) {
+            super(entity);
+            this.listener = listener;
+        }
+
+        public void writeTo(OutputStream output) throws IOException {
+            OutputStream wrapper = output;
+            if (output.getClass() != CountedOutputStream.class && this.listener != null) {
+                wrapper = new CountedOutputStream(output, listener);
+            }
+            this.wrappedEntity.writeTo(wrapper);
+        }
+    }
+
     private class UploadServiceHandler extends Handler {
         public UploadServiceHandler(Looper looper) {
             super(looper);
@@ -69,10 +123,17 @@ public class UploadService extends Service {
                     .addBinaryBody("upload", desc.createInputStream(), ContentType.DEFAULT_BINARY, uri.getLastPathSegment())
                     .build();
 
+                HttpEntity wrapper = new ProgressHttpEntityWrapper(entity, new ProgressListener() {
+                    @Override
+                    public void progress(long bytes) {
+                        Log.v(TAG, "Total is " + bytes);
+                    }
+                });
+
                 HttpClient client = AndroidHttpClient.newInstance(res.getString(R.string.http_user_agent));
                 HttpPost post = new HttpPost(res.getString(R.string.server_upload_address));
                 post.setHeader("Authorization", authHeader);
-                post.setEntity(entity);
+                post.setEntity(wrapper);
                 HttpResponse response = client.execute(post);
                 Log.e(TAG, "Response: " + response.getStatusLine());
                 Log.e(TAG, "Len: " + response.getEntity().getContentLength());
