@@ -7,5 +7,6 @@
     <string name="server_upload_address">http://www.example.com/upload</string>
     <string name="server_auth_username">username</string>
     <string name="server_auth_password">password</string>
+    <string name="http_user_agent">SimpleUpload/0.1</string>
 
 </resources>

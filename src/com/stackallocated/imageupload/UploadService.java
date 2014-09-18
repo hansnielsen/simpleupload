@@ -1,14 +1,25 @@
 package com.stackallocated.imageupload;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+
 import android.app.Service;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.Resources;
 import android.net.Uri;
+import android.net.http.AndroidHttpClient;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
+import android.util.Base64;
 import android.util.Log;
 
 public class UploadService extends Service {
@@ -35,25 +46,41 @@ public class UploadService extends Service {
             int startId = msg.arg1;
             Uri uri = (Uri)msg.obj;
 
-            // Here, we need to:
-            //   a) get the HTTP endpoint / credentials
-            //   b) open the image
-            //   c) display a progress notification
-            //   d) open an HTTP connection
-            //   e) stream the image through the connection
-            //   e) retrieve the resulting URL
-            //   f) display a final notification with the URL
+            try {
+                // Here, we need to:
+                //   a) get the HTTP endpoint / credentials
+                //   b) open the image
+                //   c) display a progress notification
+                //   d) open an HTTP connection
+                //   e) stream the image through the connection
+                //   e) retrieve the resulting URL
+                //   f) display a final notification with the URL
 
-            // Temporary test code that just wastes time.
-            Log.i(TAG, "Starting handling of '" + uri + "'/" + startId);
-            long endTime = System.currentTimeMillis() + 5*1000;
-            while (System.currentTimeMillis() < endTime) {
-                synchronized (this) {
-                    try {
-                        wait(endTime - System.currentTimeMillis());
-                    } catch (Exception e) {
-                    }
-                }
+                AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(uri, "r");
+                Log.v(TAG, "Image length is " + desc.getLength());
+
+                Resources res = getResources();
+
+                String credentials = res.getString(R.string.server_auth_username) + ":" +
+                                     res.getString(R.string.server_auth_password);
+                String authHeader = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
+
+                HttpEntity entity = MultipartEntityBuilder.create()
+                    .addBinaryBody("upload", desc.createInputStream(), ContentType.DEFAULT_BINARY, uri.getLastPathSegment())
+                    .build();
+
+                HttpClient client = AndroidHttpClient.newInstance(res.getString(R.string.http_user_agent));
+                HttpPost post = new HttpPost(res.getString(R.string.server_upload_address));
+                post.setHeader("Authorization", authHeader);
+                post.setEntity(entity);
+                HttpResponse response = client.execute(post);
+                Log.e(TAG, "Response: " + response.getStatusLine());
+                Log.e(TAG, "Len: " + response.getEntity().getContentLength());
+
+                desc.close();
+            } catch (Exception e) {
+                Log.e(TAG, "Something went wrong in the upload!");
+                e.printStackTrace();
             }
             Log.i(TAG, "Finished handling of '" + uri + "'/" + startId);
 
