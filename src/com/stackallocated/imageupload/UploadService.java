@@ -1,7 +1,10 @@
 package com.stackallocated.imageupload;
 
+import java.io.BufferedReader;
 import java.io.FilterOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 import org.apache.http.HttpEntity;
@@ -25,6 +28,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.Base64;
+import android.util.JsonReader;
 import android.util.Log;
 
 public class UploadService extends Service {
@@ -87,6 +91,41 @@ public class UploadService extends Service {
             super(looper);
         }
 
+        void parseJsonResponse(InputStream input) throws IOException {
+            InputStreamReader inputreader = new InputStreamReader(input);
+            BufferedReader bufreader = new BufferedReader(inputreader);
+            JsonReader reader = new JsonReader(bufreader);
+
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String field = reader.nextName();
+                switch (field) {
+                    case "status": {
+                        String status = reader.nextString();
+                        Log.v(TAG, "Got status " + status);
+                        break;
+                    }
+                    case "public_url": {
+                        String url = reader.nextString();
+                        Log.v(TAG, "Got URL " + url);
+                        break;
+                    }
+                    case "errors": {
+                        reader.beginArray();
+                        while (reader.hasNext()) {
+                            String error = reader.nextString();
+                            Log.v(TAG, "Got error '" + error + "'");
+                        }
+                        reader.endArray();
+                        break;
+                    }
+                }
+            }
+            reader.endObject();
+
+            reader.close();
+        }
+
         @Override
         public void handleMessage(Message msg) {
             // If the message type is wrong, panic and kill everything.
@@ -137,6 +176,8 @@ public class UploadService extends Service {
                 HttpResponse response = client.execute(post);
                 Log.e(TAG, "Response: " + response.getStatusLine());
                 Log.e(TAG, "Len: " + response.getEntity().getContentLength());
+
+                parseJsonResponse(response.getEntity().getContent());
 
                 desc.close();
             } catch (Exception e) {
