@@ -1,11 +1,9 @@
 package com.stackallocated.imageupload;
 
 import java.io.BufferedReader;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.util.ArrayList;
 
 import org.apache.http.HttpEntity;
@@ -13,8 +11,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.HttpEntityWrapper;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
+
+import com.stackallocated.util.ProgressHttpEntityWrapper;
+import com.stackallocated.util.ProgressListener;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -39,55 +39,6 @@ public class UploadService extends Service {
     private Handler handler;
 
     private final static int UPLOAD_IMAGE = 1;
-
-    public static interface ProgressListener {
-        void progress(long bytes);
-    }
-
-    class CountedOutputStream extends FilterOutputStream {
-        long bytes = 0;
-        ProgressListener listener;
-
-        public CountedOutputStream(OutputStream out, ProgressListener listener) {
-            super(out);
-            this.listener = listener;
-        }
-
-        @Override
-        public void write(int b) throws IOException {
-            byte[] arr = new byte[]{(byte) b};
-            write(arr, 0, arr.length);
-        }
-
-        @Override
-        public void write(byte[] b) throws IOException {
-            write(b, 0, b.length);
-        }
-
-        @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            out.write(b, off, len);
-            bytes += len;
-            listener.progress(bytes);
-        }
-    }
-
-    class ProgressHttpEntityWrapper extends HttpEntityWrapper {
-        ProgressListener listener;
-
-        public ProgressHttpEntityWrapper(final HttpEntity entity, final ProgressListener listener) {
-            super(entity);
-            this.listener = listener;
-        }
-
-        public void writeTo(OutputStream output) throws IOException {
-            OutputStream wrapper = output;
-            if (output.getClass() != CountedOutputStream.class && this.listener != null) {
-                wrapper = new CountedOutputStream(output, listener);
-            }
-            this.wrappedEntity.writeTo(wrapper);
-        }
-    }
 
     private class JsonUploadResponse {
         public String status = null;
