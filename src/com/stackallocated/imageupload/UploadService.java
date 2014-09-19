@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.ArrayList;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -15,6 +16,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.HttpEntityWrapper;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
@@ -86,34 +89,49 @@ public class UploadService extends Service {
         }
     }
 
+    private class JsonUploadResponse {
+        public String status = null;
+        public String url = null;
+        ArrayList<String> errors = new ArrayList<String>();
+    }
+
     private class UploadServiceHandler extends Handler {
+        final NotificationManager nm;
+        final static int UPLOAD_PROGRESS_NOTIFICATION = 1;
+        final static int UPLOAD_COMPLETE_NOTIFICATION = 2;
+
         public UploadServiceHandler(Looper looper) {
             super(looper);
+            nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         }
 
-        void parseJsonResponse(InputStream input) throws IOException {
+        JsonUploadResponse parseJsonResponse(InputStream input) throws IOException {
+            JsonUploadResponse response = new JsonUploadResponse();
+
             InputStreamReader inputreader = new InputStreamReader(input);
             BufferedReader bufreader = new BufferedReader(inputreader);
-            JsonReader reader = new JsonReader(bufreader);
 
+            JsonReader reader = new JsonReader(bufreader);
             reader.beginObject();
             while (reader.hasNext()) {
                 String field = reader.nextName();
                 switch (field) {
                     case "status": {
-                        String status = reader.nextString();
-                        Log.v(TAG, "Got status " + status);
+                        response.status = reader.nextString();
+                        Log.v(TAG, "Got status " + response.status);
                         break;
                     }
                     case "public_url": {
-                        String url = reader.nextString();
-                        Log.v(TAG, "Got URL " + url);
+                        response.url = reader.nextString();
+                        Log.v(TAG, "Got URL " + response.url);
                         break;
                     }
+                    // XXX: This is not actually the error format, it'll fail miserably if there's an error.
                     case "errors": {
                         reader.beginArray();
                         while (reader.hasNext()) {
                             String error = reader.nextString();
+                            response.errors.add(error);
                             Log.v(TAG, "Got error '" + error + "'");
                         }
                         reader.endArray();
@@ -122,8 +140,9 @@ public class UploadService extends Service {
                 }
             }
             reader.endObject();
-
             reader.close();
+
+            return response;
         }
 
         @Override
@@ -139,6 +158,18 @@ public class UploadService extends Service {
             int startId = msg.arg1;
             Uri uri = (Uri)msg.obj;
 
+            final Notification.Builder nbuilder = new Notification.Builder(getApplicationContext());
+            nbuilder.setSmallIcon(R.drawable.ic_launcher)
+                    .setContentTitle("Uploading image")
+                    .setContentText(uri.toString())
+                    .setProgress(100, 0, false)
+                    .setOngoing(true);
+            startForeground(UPLOAD_PROGRESS_NOTIFICATION, nbuilder.getNotification());
+
+            // For the notification when the upload is done.
+            Notification.Builder ncompletebuilder = new Notification.Builder(getApplicationContext());
+            ncompletebuilder.setSmallIcon(R.drawable.ic_launcher);
+
             try {
                 // Here, we need to:
                 //   a) get the HTTP endpoint / credentials
@@ -149,8 +180,9 @@ public class UploadService extends Service {
                 //   e) retrieve the resulting URL
                 //   f) display a final notification with the URL
 
-                AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(uri, "r");
-                Log.v(TAG, "Image length is " + desc.getLength());
+                final AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(uri, "r");
+                final long imageLen = desc.getLength();
+                Log.v(TAG, "Image length is " + imageLen);
 
                 Resources res = getResources();
 
@@ -165,7 +197,13 @@ public class UploadService extends Service {
                 HttpEntity wrapper = new ProgressHttpEntityWrapper(entity, new ProgressListener() {
                     @Override
                     public void progress(long bytes) {
-                        Log.v(TAG, "Total is " + bytes);
+                        int percent = (int)((100 * bytes) / imageLen);
+                        if (percent > 100) {
+                            percent = 100;
+                        }
+                        nbuilder.setProgress(100, percent, false);
+                        nm.notify(UPLOAD_PROGRESS_NOTIFICATION, nbuilder.getNotification());
+                        Log.v(TAG, "Total is " + bytes + " of " + imageLen);
                     }
                 });
 
@@ -177,10 +215,26 @@ public class UploadService extends Service {
                 Log.e(TAG, "Response: " + response.getStatusLine());
                 Log.e(TAG, "Len: " + response.getEntity().getContentLength());
 
-                parseJsonResponse(response.getEntity().getContent());
+                JsonUploadResponse json = parseJsonResponse(response.getEntity().getContent());
+
+                if ("ok".equals(json.status) && json.url != null) {
+                    // Create successful upload notification.
+                    ncompletebuilder.setContentTitle("Upload successful")
+                                    .setContentText(json.url);
+                    nm.notify(json.url, UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
+                } else {
+                    // Create upload failure notification.
+                    ncompletebuilder.setContentTitle("Upload failed")
+                                    .setContentText(uri.toString());
+                    nm.notify(uri.toString(), UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
+                }
 
                 desc.close();
             } catch (Exception e) {
+                ncompletebuilder.setContentTitle("Upload failed")
+                                .setContentText(e.getLocalizedMessage());
+                nm.notify(uri.toString(), UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
+
                 Log.e(TAG, "Something went wrong in the upload!");
                 e.printStackTrace();
             }
@@ -188,7 +242,15 @@ public class UploadService extends Service {
 
             // This handler is the only place stopSelf() will be called,
             // so we can be sure that all calls will be in order.
-            stopSelf(startId);
+            boolean res = stopSelfResult(startId);
+            if (res) {
+                // Service is stopping, remove ongoing progress notification
+                stopForeground(true);
+            } else {
+                nbuilder.setProgress(100, 0, false)
+                        .setContentText("");
+                nm.notify(UPLOAD_PROGRESS_NOTIFICATION, nbuilder.getNotification());
+            }
         }
     }
 
