@@ -49,36 +49,40 @@ public class UploadActivity extends Activity {
 
         final Resources res = getResources();
 
-        ArrayList<Uri> imageUris = null;
+        ArrayList<Uri> imageUris = new ArrayList<Uri>();
         final Intent intent = getIntent();
         // We have an image to upload, get list of images.
         if (Intent.ACTION_SEND.equals(intent.getAction())) {
             Log.v(TAG, "Got send action");
 
             Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
-            imageUris = new ArrayList<Uri>(Arrays.asList(imageUri));
+            imageUris.add(imageUri);
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())) {
             Log.v(TAG, "Got multiple send action");
 
-            imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+            try {
+                ArrayList<Uri> extraImageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+                imageUris.addAll(extraImageUris);
+            } catch (Exception e) {
+                // Something broke, don't upload any images.
+                Log.e(TAG, "Getting multiple images broke! " + e.getLocalizedMessage());
+            }
         }
 
         // Sanitize the list of image URIs by discarding null or unopenable ones.
         sanitizeUris(imageUris);
 
         // Trigger the upload.
-        if (imageUris != null) {
-            int images = imageUris.size();
-            makeToast(res.getQuantityString(R.plurals.uploader_uploading_toast, images, images));
+        int images = imageUris.size();
+        makeToast(res.getQuantityString(R.plurals.uploader_uploading_toast, images, images));
 
-            // Repeated intent creation is so that killing of the upload
-            // service doesn't require fancy handling of intents.
-            for (Uri imageUri : imageUris) {
-                Log.d(TAG, "Enqueuing image '" + imageUri + "'");
-                Intent i = new Intent(this, UploadService.class);
-                i.putExtra(Intent.EXTRA_STREAM, imageUri);
-                startService(i);
-            }
+        // Repeated intent creation is so that killing of the upload
+        // service doesn't require fancy handling of intents.
+        for (Uri imageUri : imageUris) {
+            Log.d(TAG, "Enqueuing image '" + imageUri + "'");
+            Intent i = new Intent(this, UploadService.class);
+            i.putExtra(Intent.EXTRA_STREAM, imageUri);
+            startService(i);
         }
 
         // This activity never needs to show the UI.
