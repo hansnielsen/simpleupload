@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory android:title="@string/pref_category_user">
+    	<EditTextPreference android:key="pref_server_auth_username" android:title="@string/pref_upload_username"/>
+    	<EditTextPreference android:key="pref_server_auth_password" android:title="@string/pref_upload_password"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_category_server">
+        <EditTextPreference android:key="pref_server_upload_url" android:title="@string/pref_upload_url"/>
+    </PreferenceCategory>
+</PreferenceScreen>
