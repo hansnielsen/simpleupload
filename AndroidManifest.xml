@@ -36,6 +36,7 @@
             </intent-filter>
         </activity>
         <service android:name=".UploadService" />
+        <activity android:name=".SettingsActivity" android:label="@string/pref_activity_name"></activity>
     </application>
 
 </manifest>

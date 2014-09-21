@@ -18,6 +18,7 @@
 	<string name="uploader_notification_successful">Upload successful</string>
 	<string name="uploader_notification_failure">Upload failed</string>
 
+	<string name="pref_activity_name">SimpleUpload Settings</string>
     <string name="pref_category_user">User</string>
     <string name="pref_upload_username">Username</string>
     <string name="pref_upload_password">Password</string>
