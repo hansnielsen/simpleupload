@@ -7,6 +7,7 @@ import java.util.Iterator;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -46,6 +47,8 @@ public class UploadActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        final Resources res = getResources();
+
         ArrayList<Uri> imageUris = null;
         final Intent intent = getIntent();
         // We have an image to upload, get list of images.
@@ -64,12 +67,9 @@ public class UploadActivity extends Activity {
         sanitizeUris(imageUris);
 
         // Trigger the upload.
-        if (imageUris != null && imageUris.size() > 0) {
-            if (imageUris.size() > 1) {
-                makeToast("Uploading " + imageUris.size() + " images!");
-            } else{
-                makeToast("Uploading image!");
-            }
+        if (imageUris != null) {
+            int images = imageUris.size();
+            makeToast(res.getQuantityString(R.plurals.uploader_uploading_toast, images, images));
 
             // Repeated intent creation is so that killing of the upload
             // service doesn't require fancy handling of intents.
@@ -79,8 +79,6 @@ public class UploadActivity extends Activity {
                 i.putExtra(Intent.EXTRA_STREAM, imageUri);
                 startService(i);
             }
-        } else {
-            makeToast("No images to upload!");
         }
 
         // This activity never needs to show the UI.

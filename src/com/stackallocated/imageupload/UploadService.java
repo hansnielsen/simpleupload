@@ -48,11 +48,13 @@ public class UploadService extends Service {
 
     private class UploadServiceHandler extends Handler {
         final NotificationManager nm;
+        final Resources res;
         final static int UPLOAD_PROGRESS_NOTIFICATION = 1;
         final static int UPLOAD_COMPLETE_NOTIFICATION = 2;
 
         public UploadServiceHandler(Looper looper) {
             super(looper);
+            res = getResources();
             nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         }
 
@@ -111,7 +113,7 @@ public class UploadService extends Service {
 
             final Notification.Builder nbuilder = new Notification.Builder(getApplicationContext());
             nbuilder.setSmallIcon(R.drawable.ic_launcher)
-                    .setContentTitle("Uploading image")
+                    .setContentTitle(res.getString(R.string.uploader_notification_uploading))
                     .setContentText(uri.toString())
                     .setProgress(100, 0, false)
                     .setOngoing(true);
@@ -134,8 +136,6 @@ public class UploadService extends Service {
                 final AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(uri, "r");
                 final long imageLen = desc.getLength();
                 Log.v(TAG, "Image length is " + imageLen);
-
-                Resources res = getResources();
 
                 String credentials = res.getString(R.string.server_auth_username) + ":" +
                                      res.getString(R.string.server_auth_password);
@@ -170,19 +170,19 @@ public class UploadService extends Service {
 
                 if ("ok".equals(json.status) && json.url != null) {
                     // Create successful upload notification.
-                    ncompletebuilder.setContentTitle("Upload successful")
+                    ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_successful))
                                     .setContentText(json.url);
                     nm.notify(json.url, UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
                 } else {
                     // Create upload failure notification.
-                    ncompletebuilder.setContentTitle("Upload failed")
+                    ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_failure))
                                     .setContentText(uri.toString());
                     nm.notify(uri.toString(), UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
                 }
 
                 desc.close();
             } catch (Exception e) {
-                ncompletebuilder.setContentTitle("Upload failed")
+                ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_failure))
                                 .setContentText(e.getLocalizedMessage());
                 nm.notify(uri.toString(), UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
 

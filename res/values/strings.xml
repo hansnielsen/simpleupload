@@ -9,4 +9,13 @@
     <string name="server_auth_password">password</string>
     <string name="http_user_agent">SimpleUpload/0.1</string>
 
+    <plurals name="uploader_uploading_toast">
+        <item quantity="zero">No images to upload!</item>
+        <item quantity="one">Uploading image!</item>
+        <item quantity="other">Uploading %d images!</item>
+    </plurals>
+    <string name="uploader_notification_uploading">Uploading image</string>
+	<string name="uploader_notification_successful">Upload successful</string>
+	<string name="uploader_notification_failure">Upload failed</string>
+
 </resources>
