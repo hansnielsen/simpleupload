@@ -1,7 +1,6 @@
 package com.stackallocated.imageupload;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 
 import android.app.Activity;
