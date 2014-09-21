@@ -20,6 +20,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.net.Uri;
@@ -30,6 +31,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
+import android.preference.PreferenceManager;
 import android.util.Base64;
 import android.util.JsonReader;
 import android.util.Log;
@@ -133,12 +135,14 @@ public class UploadService extends Service {
                 //   e) retrieve the resulting URL
                 //   f) display a final notification with the URL
 
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
                 final AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(uri, "r");
                 final long imageLen = desc.getLength();
                 Log.v(TAG, "Image length is " + imageLen);
 
-                String credentials = res.getString(R.string.server_auth_username) + ":" +
-                                     res.getString(R.string.server_auth_password);
+                String credentials = prefs.getString(SettingsActivity.KEY_UPLOAD_USERNAME, "") + ":" +
+                                     prefs.getString(SettingsActivity.KEY_UPLOAD_PASSWORD, "");
                 String authHeader = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
 
                 HttpEntity entity = MultipartEntityBuilder.create()
@@ -159,7 +163,7 @@ public class UploadService extends Service {
                 });
 
                 HttpClient client = AndroidHttpClient.newInstance(res.getString(R.string.http_user_agent));
-                HttpPost post = new HttpPost(res.getString(R.string.server_upload_address));
+                HttpPost post = new HttpPost(prefs.getString(SettingsActivity.KEY_UPLOAD_URL, ""));
                 post.setHeader("Authorization", authHeader);
                 post.setEntity(wrapper);
                 HttpResponse response = client.execute(post);
