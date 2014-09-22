@@ -141,8 +141,8 @@ public class UploadService extends Service {
                 final long imageLen = desc.getLength();
                 Log.v(TAG, "Image length is " + imageLen);
 
-                String credentials = prefs.getString(SettingsActivity.KEY_UPLOAD_USERNAME, "") + ":" +
-                                     prefs.getString(SettingsActivity.KEY_UPLOAD_PASSWORD, "");
+                String credentials = Uri.encode(prefs.getString(SettingsActivity.KEY_UPLOAD_USERNAME, "")) + ":" +
+                                     Uri.encode(prefs.getString(SettingsActivity.KEY_UPLOAD_PASSWORD, ""));
                 String authHeader = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
 
                 HttpEntity entity = MultipartEntityBuilder.create()
