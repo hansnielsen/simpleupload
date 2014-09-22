@@ -9,7 +9,7 @@ public class SettingsActivity extends PreferenceActivity {
     public static final String KEY_UPLOAD_USERNAME = "pref_server_auth_username";
     public static final String KEY_UPLOAD_PASSWORD = "pref_server_auth_password";
 
-    class SettingsFragment extends PreferenceFragment {
+    public static class SettingsFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
