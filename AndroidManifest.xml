@@ -35,8 +35,15 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/pref_activity_name"
+            android:parentActivityName=".MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
         <service android:name=".UploadService" />
-        <activity android:name=".SettingsActivity" android:label="@string/pref_activity_name"></activity>
     </application>
 
 </manifest>
