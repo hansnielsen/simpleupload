@@ -8,12 +8,13 @@
         <EditTextPreference
             android:key="pref_server_auth_password"
             android:title="@string/pref_upload_password"
-            android:inputType="textVisiblePassword"/>
+            android:inputType="textPassword"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_category_server">
         <EditTextPreference
             android:key="pref_server_upload_url"
             android:title="@string/pref_upload_url"
+            android:hint="https://www.example.com/upload"
             android:inputType="textUri"/>
     </PreferenceCategory>
 </PreferenceScreen>
