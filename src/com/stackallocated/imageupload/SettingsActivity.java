@@ -53,12 +53,22 @@ public class SettingsActivity extends PreferenceActivity {
 
             Preference pref = findPreference(key);
             switch (key) {
-                case KEY_UPLOAD_USERNAME:
-                    pref.setSummary(prefs.getString(key, res.getString(R.string.pref_upload_username_empty)));
+                case KEY_UPLOAD_USERNAME: {
+                    String summary = prefs.getString(key, "");
+                    if ("".equals(summary)) {
+                        summary = res.getString(R.string.pref_upload_username_empty);
+                    }
+                    pref.setSummary(summary);
                     break;
-                case KEY_UPLOAD_URL:
-                    pref.setSummary(prefs.getString(key, res.getString(R.string.pref_upload_url_empty)));
+                }
+                case KEY_UPLOAD_URL: {
+                    String summary = prefs.getString(key, "");
+                    if ("".equals(summary)) {
+                        summary = res.getString(R.string.pref_upload_url_empty);
+                    }
+                    pref.setSummary(summary);
                     break;
+                }
                 case KEY_UPLOAD_PASSWORD: {
                     boolean passwordNotSet = "".equals(prefs.getString(key, ""));
                     if (passwordNotSet) {
