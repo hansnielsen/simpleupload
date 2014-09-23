@@ -4,6 +4,7 @@ import java.util.Map;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
@@ -48,18 +49,20 @@ public class SettingsActivity extends PreferenceActivity {
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+            final Resources res = getResources();
+
             Preference pref = findPreference(key);
             switch (key) {
                 case KEY_UPLOAD_USERNAME:
-                    pref.setSummary(prefs.getString(key, "No username set"));
+                    pref.setSummary(prefs.getString(key, res.getString(R.string.pref_upload_username_empty)));
                     break;
                 case KEY_UPLOAD_URL:
-                    pref.setSummary(prefs.getString(key, "No URL set"));
+                    pref.setSummary(prefs.getString(key, res.getString(R.string.pref_upload_url_empty)));
                     break;
                 case KEY_UPLOAD_PASSWORD: {
                     boolean passwordNotSet = "".equals(prefs.getString(key, ""));
                     if (passwordNotSet) {
-                        pref.setSummary("No password set");
+                        pref.setSummary(res.getString(R.string.pref_upload_password_empty));
                     } else {
                         EditText editText = ((EditTextPreference)pref).getEditText();
                         CharSequence masked = editText.getTransformationMethod()
