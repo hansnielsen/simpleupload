@@ -176,7 +176,7 @@ public class UploadService extends Service {
                 if ("ok".equals(json.status) && json.url != null) {
                     // Create successful upload notification.
                     Intent intent = new Intent(getApplicationContext(), ClipboardURLReceiver.class);
-                    intent.putExtra("url", json.url);
+                    intent.setAction(json.url);
                     PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
 
                     ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_successful))

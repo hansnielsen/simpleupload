@@ -14,7 +14,7 @@ public class ClipboardURLReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 	    final Resources res = context.getResources();
 
-		Uri uri = Uri.parse(intent.getStringExtra("url"));
+		Uri uri = Uri.parse(intent.getAction());
 		ClipData clip = ClipData.newRawUri("Image URL", uri);
 		ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
 		cm.setPrimaryClip(clip);
