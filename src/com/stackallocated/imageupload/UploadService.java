@@ -18,6 +18,7 @@ import com.stackallocated.util.ProgressListener;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -174,8 +175,12 @@ public class UploadService extends Service {
 
                 if ("ok".equals(json.status) && json.url != null) {
                     // Create successful upload notification.
+                    Intent intent = new Intent(getApplicationContext(), ClipboardURLReceiver.class);
+                    intent.putExtra("url", json.url);
+                    PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
+
                     ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_successful))
-                                    .setContentText(json.url);
+                                    .setContentText(json.url).setContentIntent(pending);
                     nm.notify(json.url, UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
                 } else {
                     // Create upload failure notification.

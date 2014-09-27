@@ -44,6 +44,7 @@
                 android:value=".MainActivity" />
         </activity>
         <service android:name=".UploadService" />
+        <receiver android:name=".ClipboardURLReceiver" />
     </application>
 
 </manifest>
