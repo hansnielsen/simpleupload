@@ -4,16 +4,19 @@
         <EditTextPreference
             android:key="pref_server_auth_username"
             android:title="@string/pref_upload_username"
+            android:summary="@string/pref_upload_username_empty"
             android:inputType="textNoSuggestions"/>
         <EditTextPreference
             android:key="pref_server_auth_password"
             android:title="@string/pref_upload_password"
+            android:summary="@string/pref_upload_password_empty"
             android:inputType="textPassword"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_category_server">
         <EditTextPreference
             android:key="pref_server_upload_url"
             android:title="@string/pref_upload_url"
+            android:summary="@string/pref_upload_url_empty"
             android:hint="https://www.example.com/upload"
             android:inputType="textUri"/>
     </PreferenceCategory>
