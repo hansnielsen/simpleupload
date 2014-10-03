@@ -24,6 +24,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -182,11 +183,14 @@ public class UploadService extends Service {
                     intent.setAction(json.url);
                     PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
 
-                    Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
-                    Bitmap thumbnail = Util.makeThumbnail(original, 512);
+
                     ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_successful))
-                                    .setContentText(json.url).setContentIntent(pending)
-                                    .setStyle(new Notification.BigPictureStyle().bigPicture(thumbnail));
+                                    .setContentText(json.url).setContentIntent(pending);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
+                        Bitmap thumbnail = Util.makeThumbnail(original, 512);
+                        ncompletebuilder.setStyle(new Notification.BigPictureStyle().bigPicture(thumbnail));
+                    }
                     nm.notify(json.url, UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
                 } else {
                     // Create upload failure notification.
