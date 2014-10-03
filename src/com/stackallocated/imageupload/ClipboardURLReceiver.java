@@ -5,6 +5,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ClipData.Item;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.widget.Toast;
@@ -15,7 +16,8 @@ public class ClipboardURLReceiver extends BroadcastReceiver {
 	    final Resources res = context.getResources();
 
 		Uri uri = Uri.parse(intent.getAction());
-		ClipData clip = ClipData.newRawUri("Image URL", uri);
+		ClipData clip = ClipData.newPlainText("Image URL", uri.toString());
+		clip.addItem(new Item(uri));
 		ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
 		cm.setPrimaryClip(clip);
 
