@@ -13,6 +13,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -105,6 +106,7 @@ public class UploadService extends Service {
             return response;
         }
 
+        @SuppressLint("NewApi") // For the Big View notification
         @Override
         public void handleMessage(Message msg) {
             // If the message type is wrong, panic and kill everything.
