@@ -185,15 +185,19 @@ public class UploadService extends Service {
                     intent.setAction(json.url);
                     PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
 
-
                     ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_successful))
                                     .setContentText(json.url).setContentIntent(pending);
+
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                         Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
                         Bitmap thumbnail = Util.makeThumbnail(original, 512);
                         ncompletebuilder.setStyle(new Notification.BigPictureStyle().bigPicture(thumbnail));
                     }
                     nm.notify(json.url, UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
+
+                    // Store successful upload in the database.
+                    HistoryDatabase db = HistoryDatabase.getInstance(getApplicationContext());
+                    db.insertImage(json.url, System.currentTimeMillis());
                 } else {
                     // Create upload failure notification.
                     ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_failure))
