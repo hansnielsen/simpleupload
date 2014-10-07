@@ -180,6 +180,8 @@ public class UploadService extends Service {
                 JsonUploadResponse json = parseJsonResponse(response.getEntity().getContent());
 
                 if ("ok".equals(json.status) && json.url != null) {
+                    Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
+
                     // Create successful upload notification.
                     Intent intent = new Intent(getApplicationContext(), ClipboardURLReceiver.class);
                     intent.setAction(json.url);
@@ -189,15 +191,15 @@ public class UploadService extends Service {
                                     .setContentText(json.url).setContentIntent(pending);
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
-                        Bitmap thumbnail = Util.makeThumbnail(original, 512);
-                        ncompletebuilder.setStyle(new Notification.BigPictureStyle().bigPicture(thumbnail));
+                        Bitmap bigthumbnail = Util.makeThumbnail(original, 512);
+                        ncompletebuilder.setStyle(new Notification.BigPictureStyle().bigPicture(bigthumbnail));
                     }
                     nm.notify(json.url, UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
 
                     // Store successful upload in the database.
                     HistoryDatabase db = HistoryDatabase.getInstance(getApplicationContext());
-                    db.insertImage(json.url, System.currentTimeMillis());
+                    Bitmap thumbnail = Util.makeThumbnail(original, 128);
+                    db.insertImage(json.url, System.currentTimeMillis(), thumbnail);
                 } else {
                     // Create upload failure notification.
                     ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_failure))

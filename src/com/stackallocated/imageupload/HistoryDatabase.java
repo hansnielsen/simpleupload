@@ -1,10 +1,14 @@
 package com.stackallocated.imageupload;
 
+import java.io.ByteArrayOutputStream;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
 import android.provider.BaseColumns;
 import android.util.Log;
 
@@ -17,12 +21,16 @@ public class HistoryDatabase extends SQLiteOpenHelper {
     private final static String IMAGES_TABLE_NAME = "images";
     private final static String IMAGES_COL_URL = "url";
     private final static String IMAGES_COL_UPLOADED_DATE = "uploaded_date";
+    private final static String IMAGES_COL_THUMBNAIL = "thumbnail";
+
     private final static String IMAGES_TABLE_CREATE = "CREATE TABLE " + IMAGES_TABLE_NAME + " (" +
             BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT" +
             "," +
             IMAGES_COL_URL + " TEXT" +
             "," +
             IMAGES_COL_UPLOADED_DATE + " INTEGER" +
+            "," +
+            IMAGES_COL_THUMBNAIL + " BLOB" +
             ");";
 
     // Singleton used to access the database.
@@ -48,10 +56,14 @@ public class HistoryDatabase extends SQLiteOpenHelper {
         Log.e(TAG, "Got onUpgrade from " + oldVersion + " to " + newVersion + ", ignoring");
     }
 
-    public void insertImage(String url, long uploadedDate) {
+    public void insertImage(String url, long uploadedDate, Bitmap thumbnail) {
         ContentValues values = new ContentValues();
         values.put(IMAGES_COL_URL, url);
         values.put(IMAGES_COL_UPLOADED_DATE, uploadedDate);
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        thumbnail.compress(CompressFormat.JPEG, 80, os);
+        values.put(IMAGES_COL_THUMBNAIL, os.toByteArray());
+
         long ret = getWritableDatabase().insert(IMAGES_TABLE_NAME, null, values);
         if (ret < 0) {
             Log.e(TAG, "Unable to write row to database!");
