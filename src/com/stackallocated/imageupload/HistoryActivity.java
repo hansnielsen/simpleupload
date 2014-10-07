@@ -1,6 +1,8 @@
 package com.stackallocated.imageupload;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -33,6 +35,19 @@ public class HistoryActivity extends Activity {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
+        } else if (id == R.id.action_clear_history) {
+            DialogInterface.OnClickListener clear_history_listener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    HistoryDatabase.getInstance(getApplicationContext()).deleteAllImages();
+                }
+            };
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.dialog_clear_history_title)
+                   .setMessage(R.string.dialog_clear_history_prompt)
+                   .setNeutralButton(R.string.dialog_cancel, null)
+                   .setPositiveButton(R.string.dialog_clear_history, clear_history_listener);
+            builder.show();
         }
         return super.onOptionsItemSelected(item);
     }

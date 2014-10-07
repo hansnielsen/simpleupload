@@ -73,4 +73,9 @@ public class HistoryDatabase extends SQLiteOpenHelper {
     public Cursor getImages() {
         return getReadableDatabase().rawQuery("SELECT * FROM " + IMAGES_TABLE_NAME + ";", null);
     }
+
+    public void deleteAllImages() {
+        Log.v(TAG, "Deleting all image history!");
+        getWritableDatabase().delete(IMAGES_TABLE_NAME, "1", null);
+    }
 }
