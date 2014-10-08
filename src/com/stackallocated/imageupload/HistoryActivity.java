@@ -10,10 +10,12 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnLongClickListener;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ResourceCursorAdapter;
@@ -28,9 +30,11 @@ public class HistoryActivity extends Activity {
         }
 
         @Override
-        public void bindView(View view, Context context, Cursor cursor) {
+        public void bindView(View view, final Context context, Cursor cursor) {
+            final Uri uri = Uri.parse(cursor.getString(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_URL)));
+
             TextView urlView = (TextView)view.findViewById(R.id.history_list_item_url);
-            urlView.setText(cursor.getString(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_URL)));
+            urlView.setText(uri.getLastPathSegment());
 
             TextView dateView = (TextView)view.findViewById(R.id.history_list_item_date);
             Date date = new Date(cursor.getLong(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_UPLOADED_DATE)));
@@ -40,6 +44,14 @@ public class HistoryActivity extends Activity {
             byte[] thumbnailData = cursor.getBlob(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_THUMBNAIL));
             Bitmap thumbnail = BitmapFactory.decodeByteArray(thumbnailData, 0, thumbnailData.length);
             thumbnailView.setImageBitmap(thumbnail);
+
+            view.setOnLongClickListener(new OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    ClipboardURLReceiver.copyUriToClipboard(context, uri.toString());
+                    return true;
+                }
+            });
         }
     }
 

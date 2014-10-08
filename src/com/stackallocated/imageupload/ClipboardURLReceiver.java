@@ -13,15 +13,19 @@ import android.widget.Toast;
 public class ClipboardURLReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
-	    final Resources res = context.getResources();
+	    copyUriToClipboard(context, intent.getAction());
+	}
 
-		Uri uri = Uri.parse(intent.getAction());
-		ClipData clip = ClipData.newPlainText("Image URL", uri.toString());
-		clip.addItem(new Item(uri));
+    public static void copyUriToClipboard(Context context, String uri) {
+        final Resources res = context.getResources();
+
+		Uri uriObject = Uri.parse(uri);
+		ClipData clip = ClipData.newPlainText("Image URL", uriObject.toString());
+		clip.addItem(new Item(uriObject));
 		ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
 		cm.setPrimaryClip(clip);
 
 		Toast toast = Toast.makeText(context, res.getString(R.string.clipboardreceiver_copied), Toast.LENGTH_SHORT);
 		toast.show();
-	}
+    }
 }
