@@ -4,18 +4,38 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 
 public class HistoryActivity extends Activity {
     private final static String TAG = "MainActivity";
+
+    private void displayHistory() {
+        Cursor images = HistoryDatabase.getInstance(this).getImages();
+        String[] columns = new String[] {
+                HistoryDatabase.IMAGES_COL_URL,
+                HistoryDatabase.IMAGES_COL_UPLOADED_DATE,
+        };
+        int[] views = {
+                R.id.history_list_item_url,
+                R.id.history_list_item_date,
+        };
+        SimpleCursorAdapter adapter = new SimpleCursorAdapter(this, R.layout.history_list_item, images, columns, views, 0);
+        ListView list = (ListView) findViewById(R.id.history_list);
+        list.setAdapter(adapter);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_history);
+
+        displayHistory();
     }
 
     @Override

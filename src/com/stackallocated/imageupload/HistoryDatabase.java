@@ -19,9 +19,9 @@ public class HistoryDatabase extends SQLiteOpenHelper {
     private final static String DB_NAME = "HistoryDatabase";
 
     private final static String IMAGES_TABLE_NAME = "images";
-    private final static String IMAGES_COL_URL = "url";
-    private final static String IMAGES_COL_UPLOADED_DATE = "uploaded_date";
-    private final static String IMAGES_COL_THUMBNAIL = "thumbnail";
+    public final static String IMAGES_COL_URL = "url";
+    public final static String IMAGES_COL_UPLOADED_DATE = "uploaded_date";
+    public final static String IMAGES_COL_THUMBNAIL = "thumbnail";
 
     private final static String IMAGES_TABLE_CREATE = "CREATE TABLE " + IMAGES_TABLE_NAME + " (" +
             BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT" +
