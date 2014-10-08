@@ -1,30 +1,42 @@
 package com.stackallocated.imageupload;
 
+import java.util.Date;
+
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
+import android.widget.ResourceCursorAdapter;
+import android.widget.TextView;
 
 public class HistoryActivity extends Activity {
     private final static String TAG = "MainActivity";
 
+    class HistoryCursorAdapter extends ResourceCursorAdapter {
+        public HistoryCursorAdapter(Context context, int layout, Cursor c, int flags) {
+            super(context, layout, c, flags);
+        }
+
+        @Override
+        public void bindView(View view, Context context, Cursor cursor) {
+            TextView urlView = (TextView)view.findViewById(R.id.history_list_item_url);
+            urlView.setText(cursor.getString(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_URL)));
+            TextView dateView = (TextView)view.findViewById(R.id.history_list_item_date);
+            Date date = new Date(cursor.getLong(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_UPLOADED_DATE)));
+            dateView.setText(date.toString());
+        }
+    }
+
     private void displayHistory() {
         Cursor images = HistoryDatabase.getInstance(this).getImages();
-        String[] columns = new String[] {
-                HistoryDatabase.IMAGES_COL_URL,
-                HistoryDatabase.IMAGES_COL_UPLOADED_DATE,
-        };
-        int[] views = {
-                R.id.history_list_item_url,
-                R.id.history_list_item_date,
-        };
-        SimpleCursorAdapter adapter = new SimpleCursorAdapter(this, R.layout.history_list_item, images, columns, views, 0);
+        HistoryCursorAdapter adapter = new HistoryCursorAdapter(this, R.layout.history_list_item, images, 0);
         ListView list = (ListView) findViewById(R.id.history_list);
         list.setAdapter(adapter);
     }
