@@ -4,6 +4,8 @@
     <string name="app_name">SimpleUpload</string>
     <string name="http_user_agent">SimpleUpload/0.1</string>
 
+    <string name="history_list_item_thumbnail_caption">Thumbnail</string>
+
     <string name="action_settings">Settings</string>
     <string name="action_clear_history">Clear history</string>
 
