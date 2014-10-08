@@ -33,6 +33,10 @@ public class HistoryDatabase extends SQLiteOpenHelper {
             IMAGES_COL_THUMBNAIL + " BLOB" +
             ");";
 
+    private final static String IMAGES_QUERY_ALL = "SELECT * FROM " + IMAGES_TABLE_NAME +
+            " ORDER BY " + IMAGES_COL_UPLOADED_DATE + " DESC" +
+            ";";
+
     // Singleton used to access the database.
     private static HistoryDatabase instance = null;
     public static HistoryDatabase getInstance(Context context) {
@@ -71,7 +75,7 @@ public class HistoryDatabase extends SQLiteOpenHelper {
     }
     
     public Cursor getImages() {
-        return getReadableDatabase().rawQuery("SELECT * FROM " + IMAGES_TABLE_NAME + ";", null);
+        return getReadableDatabase().rawQuery(IMAGES_QUERY_ALL, null);
     }
 
     public void deleteAllImages() {
