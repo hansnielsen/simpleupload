@@ -8,10 +8,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
@@ -28,9 +31,15 @@ public class HistoryActivity extends Activity {
         public void bindView(View view, Context context, Cursor cursor) {
             TextView urlView = (TextView)view.findViewById(R.id.history_list_item_url);
             urlView.setText(cursor.getString(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_URL)));
+
             TextView dateView = (TextView)view.findViewById(R.id.history_list_item_date);
             Date date = new Date(cursor.getLong(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_UPLOADED_DATE)));
             dateView.setText(date.toString());
+
+            ImageView thumbnailView = (ImageView)view.findViewById(R.id.history_list_item_image);
+            byte[] thumbnailData = cursor.getBlob(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_THUMBNAIL));
+            Bitmap thumbnail = BitmapFactory.decodeByteArray(thumbnailData, 0, thumbnailData.length);
+            thumbnailView.setImageBitmap(thumbnail);
         }
     }
 
