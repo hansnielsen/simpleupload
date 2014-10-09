@@ -3,8 +3,8 @@ package com.stackallocated.util;
 import android.graphics.Bitmap;
 import android.util.Log;
 
-public class Util {
-    private static final String TAG = "Util";
+public class ImageUtils {
+    private static final String TAG = "ImageUtils";
 
     public static Bitmap makeThumbnail(Bitmap original, int size) {
         int width = original.getWidth();

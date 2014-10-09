@@ -40,7 +40,7 @@ import android.util.Log;
 
 import com.stackallocated.util.ProgressHttpEntityWrapper;
 import com.stackallocated.util.ProgressListener;
-import com.stackallocated.util.Util;
+import com.stackallocated.util.ImageUtils;
 
 public class UploadService extends Service {
     private final static String TAG = "UploadService";
@@ -191,14 +191,14 @@ public class UploadService extends Service {
                                     .setContentText(json.url).setContentIntent(pending);
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        Bitmap bigthumbnail = Util.makeThumbnail(original, 512);
+                        Bitmap bigthumbnail = ImageUtils.makeThumbnail(original, 512);
                         ncompletebuilder.setStyle(new Notification.BigPictureStyle().bigPicture(bigthumbnail));
                     }
                     nm.notify(json.url, UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
 
                     // Store successful upload in the database.
                     HistoryDatabase db = HistoryDatabase.getInstance(getApplicationContext());
-                    Bitmap thumbnail = Util.makeThumbnail(original, 128);
+                    Bitmap thumbnail = ImageUtils.makeThumbnail(original, 128);
                     db.insertImage(json.url, System.currentTimeMillis(), thumbnail);
                 } else {
                     // Create upload failure notification.
