@@ -4,7 +4,8 @@
     android:layout_height="wrap_content"
     android:paddingLeft="4sp"
     android:paddingRight="4sp"
-    android:background="?android:attr/activatedBackgroundIndicator" >
+    android:background="?android:attr/activatedBackgroundIndicator"
+    android:descendantFocusability="blocksDescendants" >
 
     <ImageView
         android:id="@+id/history_list_item_image"
