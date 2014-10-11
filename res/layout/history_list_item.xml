@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingLeft="4sp"
-    android:paddingRight="4sp" >
+    android:paddingRight="4sp"
+    android:background="?android:attr/activatedBackgroundIndicator" >
 
     <ImageView
         android:id="@+id/history_list_item_image"

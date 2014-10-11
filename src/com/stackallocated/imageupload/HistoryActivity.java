@@ -12,10 +12,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.ActionMode;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnLongClickListener;
+import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ResourceCursorAdapter;
@@ -45,13 +48,8 @@ public class HistoryActivity extends Activity {
             Bitmap thumbnail = BitmapFactory.decodeByteArray(thumbnailData, 0, thumbnailData.length);
             thumbnailView.setImageBitmap(thumbnail);
 
-            view.setOnLongClickListener(new OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    ClipboardURLReceiver.copyUriToClipboard(context, uri.toString());
-                    return true;
-                }
-            });
+            // XXX Set up a button that uses this.
+            //ClipboardURLReceiver.copyUriToClipboard(context, uri.toString());
         }
     }
 
@@ -67,6 +65,42 @@ public class HistoryActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_history);
+
+        final ListView list = (ListView) findViewById(R.id.history_list);
+        list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        list.setMultiChoiceModeListener(new MultiChoiceModeListener() {
+            @Override
+            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                return false;
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode mode) {
+            }
+
+            @Override
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                MenuInflater inflater = mode.getMenuInflater();
+                inflater.inflate(R.menu.history_delete, menu);
+                return true;
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                switch (item.getItemId())  {
+                    case R.id.action_delete_items:
+                        // XXX Delete stuff here.
+                        Log.v(TAG, "Got " + list.getCheckedItemCount() + " checked items");
+                        mode.finish();
+                        return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+            }
+        });
 
         displayHistory();
     }
