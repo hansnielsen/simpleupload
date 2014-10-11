@@ -53,11 +53,13 @@ public class HistoryActivity extends Activity {
         }
     }
 
-    private void displayHistory() {
+    private void deleteImages(long[] ids) {
+        HistoryDatabase.getInstance(this).deleteImages(ids);
+    }
+
+    private void updateHistoryCursor(HistoryCursorAdapter adapter) {
         Cursor images = HistoryDatabase.getInstance(this).getImages();
-        HistoryCursorAdapter adapter = new HistoryCursorAdapter(this, R.layout.history_list_item, images, 0);
-        ListView list = (ListView) findViewById(R.id.history_list);
-        list.setAdapter(adapter);
+        adapter.changeCursor(images);
     }
 
     @Override
@@ -66,8 +68,11 @@ public class HistoryActivity extends Activity {
 
         setContentView(R.layout.activity_history);
 
-        final Context context = this;
+        final HistoryCursorAdapter adapter = new HistoryCursorAdapter(this, R.layout.history_list_item, null, 0);
+        updateHistoryCursor(adapter);
+
         final ListView list = (ListView) findViewById(R.id.history_list);
+        list.setAdapter(adapter);
         list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
         list.setMultiChoiceModeListener(new MultiChoiceModeListener() {
             @Override
@@ -92,7 +97,8 @@ public class HistoryActivity extends Activity {
                     case R.id.action_delete_items:
                         // We can just have the DB delete them. There are no issues with
                         // race conditions because the IDs are the real row IDs.
-                        HistoryDatabase.getInstance(context).deleteImages(list.getCheckedItemIds());
+                        deleteImages(list.getCheckedItemIds());
+                        updateHistoryCursor(adapter);
                         mode.finish();
                         return true;
                 }
@@ -103,8 +109,6 @@ public class HistoryActivity extends Activity {
             public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
             }
         });
-
-        displayHistory();
     }
 
     @Override
