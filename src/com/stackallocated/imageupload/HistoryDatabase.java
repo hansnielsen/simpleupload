@@ -82,4 +82,12 @@ public class HistoryDatabase extends SQLiteOpenHelper {
         Log.v(TAG, "Deleting all image history!");
         getWritableDatabase().delete(IMAGES_TABLE_NAME, "1", null);
     }
+
+    public void deleteImages(long[] ids) {
+        for (long id : ids) {
+            Log.v(TAG, "Deleting image " + id);
+            String[] values = new String[] {"" + id};
+            getWritableDatabase().delete(IMAGES_TABLE_NAME, BaseColumns._ID + " = ?", values);
+        }
+    }
 }

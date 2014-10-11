@@ -66,6 +66,7 @@ public class HistoryActivity extends Activity {
 
         setContentView(R.layout.activity_history);
 
+        final Context context = this;
         final ListView list = (ListView) findViewById(R.id.history_list);
         list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
         list.setMultiChoiceModeListener(new MultiChoiceModeListener() {
@@ -89,8 +90,9 @@ public class HistoryActivity extends Activity {
             public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
                 switch (item.getItemId())  {
                     case R.id.action_delete_items:
-                        // XXX Delete stuff here.
-                        Log.v(TAG, "Got " + list.getCheckedItemCount() + " checked items");
+                        // We can just have the DB delete them. There are no issues with
+                        // race conditions because the IDs are the real row IDs.
+                        HistoryDatabase.getInstance(context).deleteImages(list.getCheckedItemIds());
                         mode.finish();
                         return true;
                 }
