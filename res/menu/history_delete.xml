@@ -3,7 +3,7 @@
 
     <item
         android:id="@+id/action_delete_items"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@android:drawable/ic_menu_delete"
         android:showAsAction="always"
         android:title="@string/action_delete_items">
     </item>
