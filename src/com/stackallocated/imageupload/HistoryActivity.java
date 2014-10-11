@@ -19,6 +19,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView.MultiChoiceModeListener;
+import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ResourceCursorAdapter;
@@ -57,7 +58,7 @@ public class HistoryActivity extends Activity {
         HistoryDatabase.getInstance(this).deleteImages(ids);
     }
 
-    private void updateHistoryCursor(HistoryCursorAdapter adapter) {
+    private void updateHistoryCursor(CursorAdapter adapter) {
         Cursor images = HistoryDatabase.getInstance(this).getImages();
         adapter.changeCursor(images);
     }
@@ -133,6 +134,8 @@ public class HistoryActivity extends Activity {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     HistoryDatabase.getInstance(getApplicationContext()).deleteAllImages();
+                    ListView view = (ListView)findViewById(R.id.history_list);
+                    updateHistoryCursor((CursorAdapter)view.getAdapter());
                 }
             };
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
