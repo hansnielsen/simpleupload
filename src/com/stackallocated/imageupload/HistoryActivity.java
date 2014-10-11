@@ -12,14 +12,15 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.CursorAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ResourceCursorAdapter;
@@ -49,8 +50,13 @@ public class HistoryActivity extends Activity {
             Bitmap thumbnail = BitmapFactory.decodeByteArray(thumbnailData, 0, thumbnailData.length);
             thumbnailView.setImageBitmap(thumbnail);
 
-            // XXX Set up a button that uses this.
-            //ClipboardURLReceiver.copyUriToClipboard(context, uri.toString());
+            ImageButton button = (ImageButton)view.findViewById(R.id.history_list_item_copy);
+            button.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ClipboardURLReceiver.copyUriToClipboard(context, uri.toString());
+                }
+            });
         }
     }
 
