@@ -1,7 +1,5 @@
 package com.stackallocated.imageupload;
 
-import java.util.Date;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -12,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.format.DateUtils;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -42,8 +41,24 @@ public class HistoryActivity extends Activity {
             urlView.setText(uri.getLastPathSegment());
 
             TextView dateView = (TextView)view.findViewById(R.id.history_list_item_date);
-            Date date = new Date(cursor.getLong(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_UPLOADED_DATE)));
-            dateView.setText(date.toString());
+            long uploadedAt = cursor.getLong(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_UPLOADED_DATE));
+            long now = System.currentTimeMillis();
+            CharSequence dateText = null;
+            if (now - uploadedAt < 24*60*60*1000) {
+                dateText = DateUtils.getRelativeTimeSpanString(
+                        uploadedAt,
+                        now,
+                        DateUtils.SECOND_IN_MILLIS,
+                        0);
+            } else {
+                dateText = DateUtils.getRelativeDateTimeString(
+                        getApplicationContext(),
+                        uploadedAt,
+                        DateUtils.DAY_IN_MILLIS,
+                        DateUtils.WEEK_IN_MILLIS,
+                        0);
+            }
+            dateView.setText(dateText);
 
             ImageView thumbnailView = (ImageView)view.findViewById(R.id.history_list_item_image);
             byte[] thumbnailData = cursor.getBlob(cursor.getColumnIndex(HistoryDatabase.IMAGES_COL_THUMBNAIL));
