@@ -57,6 +57,7 @@ public class UploadService extends Service {
     private class UploadServiceHandler extends Handler {
         final NotificationManager nm;
         final Resources res;
+        final PendingIntent historypending;
         final static int UPLOAD_PROGRESS_NOTIFICATION = 1;
         final static int UPLOAD_COMPLETE_NOTIFICATION = 2;
 
@@ -64,6 +65,9 @@ public class UploadService extends Service {
             super(looper);
             res = getResources();
             nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+
+            Intent historyintent = new Intent(getApplicationContext(), HistoryActivity.class);
+            historypending = PendingIntent.getActivity(getApplicationContext(), 0, historyintent, 0);
         }
 
         JsonUploadResponse parseJsonResponse(InputStream input) throws IOException {
@@ -183,12 +187,17 @@ public class UploadService extends Service {
                     Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
 
                     // Create successful upload notification.
-                    Intent intent = new Intent(getApplicationContext(), ClipboardURLReceiver.class);
-                    intent.setAction(json.url);
-                    PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
+                    Intent copyintent = new Intent(getApplicationContext(), ClipboardURLReceiver.class);
+                    copyintent.setAction(json.url);
+                    PendingIntent copypending = PendingIntent.getBroadcast(getApplicationContext(), 0, copyintent, 0);
 
                     ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_successful))
-                                    .setContentText(json.url).setContentIntent(pending);
+                                    .setContentText(json.url)
+                                    .setContentIntent(historypending)
+                                    .setAutoCancel(true)
+                                    .addAction(R.drawable.ic_action_copy_dark,
+                                            res.getString(R.string.action_copy_url),
+                                            copypending);
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                         Bitmap bigthumbnail = ImageUtils.makeThumbnail(original, 512);
