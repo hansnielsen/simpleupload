@@ -26,6 +26,7 @@
 	<string name="uploader_notification_failure">Upload failed</string>
 
 	<string name="clipboardreceiver_copied">Copied image URL</string>
+	<string name="clipboardreceiver_label">Image URL</string>
 
 	<string name="pref_activity_name">SimpleUpload Settings</string>
     <string name="pref_category_user">User</string>
