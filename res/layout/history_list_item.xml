@@ -1,36 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:paddingLeft="4sp"
-    android:paddingRight="4sp"
+    android:layout_height="64dp"
     android:background="?android:attr/activatedBackgroundIndicator"
     android:descendantFocusability="blocksDescendants" >
 
     <ImageView
         android:id="@+id/history_list_item_image"
-        android:layout_width="64sp"
-        android:layout_height="64sp"
-        android:layout_marginLeft="4sp"
-        android:layout_marginRight="4sp"
+        android:layout_width="64dp"
+        android:layout_height="fill_parent"
         android:layout_alignParentLeft="true"
-        android:contentDescription="@string/history_list_item_thumbnail_caption" />
-
-    <ImageButton
-        android:id="@+id/history_list_item_copy"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_centerVertical="true"
-        android:layout_alignParentRight="true"
-        android:src="@android:drawable/ic_menu_share" />
+        android:contentDescription="@string/history_list_item_thumbnail_caption"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp" />
 
     <TextView
         android:id="@+id/history_list_item_url"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/history_list_item_image"
-        android:layout_toLeftOf="@+id/history_list_item_copy"
         android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/history_list_item_separator"
+        android:layout_toRightOf="@+id/history_list_item_image"
         android:textSize="16sp"
         android:textStyle="bold" />
 
@@ -39,8 +29,26 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/history_list_item_url"
+        android:layout_toLeftOf="@+id/history_list_item_separator"
         android:layout_toRightOf="@+id/history_list_item_image"
-        android:layout_toLeftOf="@+id/history_list_item_copy"
         android:textSize="16sp" />
+
+    <View
+        android:id="@+id/history_list_item_separator"
+        android:layout_width="1dp"
+        android:layout_height="24dp"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@+id/history_list_item_copy"
+        android:background="@android:color/darker_gray" />
+
+    <ImageButton
+        android:id="@+id/history_list_item_copy"
+        android:layout_width="64dp"
+        android:layout_height="fill_parent"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:background="?android:selectableItemBackground"
+        android:contentDescription="@string/action_copy_url"
+        android:src="@drawable/ic_action_copy_light" />
 
 </RelativeLayout>
