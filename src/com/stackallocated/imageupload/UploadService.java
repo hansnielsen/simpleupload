@@ -110,7 +110,6 @@ public class UploadService extends Service {
             return response;
         }
 
-        @SuppressLint("NewApi") // For the Big View notification
         @Override
         public void handleMessage(Message msg) {
             // If the message type is wrong, panic and kill everything.
@@ -198,11 +197,7 @@ public class UploadService extends Service {
                                     .addAction(R.drawable.ic_action_copy_dark,
                                             res.getString(R.string.action_copy_url),
                                             copypending);
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        Bitmap bigthumbnail = ImageUtils.makeThumbnail(original, 512);
-                        ncompletebuilder.setStyle(new Notification.BigPictureStyle().bigPicture(bigthumbnail));
-                    }
+                    makeBigViewNotification(ncompletebuilder, original);
                     nm.notify(json.url, UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
 
                     // Store successful upload in the database.
@@ -237,6 +232,14 @@ public class UploadService extends Service {
                 nbuilder.setProgress(100, 0, false)
                         .setContentText("");
                 nm.notify(UPLOAD_PROGRESS_NOTIFICATION, nbuilder.getNotification());
+            }
+        }
+
+        @SuppressLint("NewApi") // For the Big View notification
+        private void makeBigViewNotification(Notification.Builder builder, Bitmap picture) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                Bitmap bigthumbnail = ImageUtils.makeThumbnail(picture, 512);
+                builder.setStyle(new Notification.BigPictureStyle().bigPicture(bigthumbnail));
             }
         }
     }
