@@ -10,6 +10,7 @@
     <string name="action_clear_history">Clear history</string>
     <string name="action_delete_items">Delete items</string>
     <string name="action_copy_url">Copy URL</string>
+    <string name="action_upload">Upload image</string>
 
     <string name="dialog_clear_history_title">Clear history</string>
     <string name="dialog_clear_history_prompt">Are you sure you want to erase the list of uploaded images?</string>

@@ -3,6 +3,12 @@
     tools:context="com.stackallocated.imageupload.MainActivity" >
 
     <item
+        android:id="@+id/action_upload"
+        android:icon="@drawable/ic_action_upload_light"
+        android:orderInCategory="99"
+        android:showAsAction="ifRoom"
+        android:title="@string/action_upload"/>
+    <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
         android:showAsAction="never"

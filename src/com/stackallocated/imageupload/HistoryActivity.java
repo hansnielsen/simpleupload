@@ -27,6 +27,7 @@ import android.widget.TextView;
 
 public class HistoryActivity extends Activity {
     private final static String TAG = "MainActivity";
+    private final static int REQUEST_IMAGE_GET = 1;
 
     class HistoryCursorAdapter extends ResourceCursorAdapter {
         public HistoryCursorAdapter(Context context, int layout, Cursor c, int flags) {
@@ -165,7 +166,27 @@ public class HistoryActivity extends Activity {
                    .setNeutralButton(R.string.dialog_cancel, null)
                    .setPositiveButton(R.string.dialog_clear_history, clear_history_listener);
             builder.show();
+            return true;
+        } else if (id == R.id.action_upload) {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivityForResult(intent, REQUEST_IMAGE_GET);
+            }
+            return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_IMAGE_GET && resultCode == RESULT_OK) {
+            Uri imageuri = data.getData();
+            Intent intent = new Intent(Intent.ACTION_SEND, null, this, UploadActivity.class);
+            intent.putExtra(Intent.EXTRA_STREAM, imageuri);
+            startActivity(intent);
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 }
