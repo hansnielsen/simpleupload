@@ -13,7 +13,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
-import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -25,7 +24,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -186,18 +184,11 @@ public class UploadService extends Service {
                     Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
 
                     // Create successful upload notification.
-                    Intent copyintent = new Intent(getApplicationContext(), ClipboardURLReceiver.class);
-                    copyintent.setAction(json.url);
-                    PendingIntent copypending = PendingIntent.getBroadcast(getApplicationContext(), 0, copyintent, 0);
-
                     ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_successful))
                                     .setContentText(json.url)
                                     .setContentIntent(historypending)
-                                    .setAutoCancel(true)
-                                    .addAction(R.drawable.ic_action_copy_dark,
-                                            res.getString(R.string.action_copy_url),
-                                            copypending);
-                    makeBigViewNotification(ncompletebuilder, original);
+                                    .setAutoCancel(true);
+                    makeBigViewNotification(ncompletebuilder, original, json.url);
                     nm.notify(json.url, UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
 
                     // Store successful upload in the database.
@@ -235,12 +226,16 @@ public class UploadService extends Service {
             }
         }
 
-        @SuppressLint("NewApi") // For the Big View notification
-        private void makeBigViewNotification(Notification.Builder builder, Bitmap picture) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                Bitmap bigthumbnail = ImageUtils.makeThumbnail(picture, 512);
-                builder.setStyle(new Notification.BigPictureStyle().bigPicture(bigthumbnail));
-            }
+        private void makeBigViewNotification(Notification.Builder builder, Bitmap picture, String url) {
+            Intent copyintent = new Intent(getApplicationContext(), ClipboardURLReceiver.class);
+            copyintent.setAction(url);
+            PendingIntent copypending = PendingIntent.getBroadcast(getApplicationContext(), 0, copyintent, 0);
+
+            Bitmap bigthumbnail = ImageUtils.makeThumbnail(picture, 512);
+            builder.setStyle(new Notification.BigPictureStyle().bigPicture(bigthumbnail));
+            builder.addAction(R.drawable.ic_action_copy_dark,
+                    res.getString(R.string.action_copy_url),
+                    copypending);
         }
     }
 
