@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -36,9 +36,9 @@ import android.util.Base64;
 import android.util.JsonReader;
 import android.util.Log;
 
+import com.stackallocated.util.ImageUtils;
 import com.stackallocated.util.ProgressHttpEntityWrapper;
 import com.stackallocated.util.ProgressListener;
-import com.stackallocated.util.ImageUtils;
 
 public class UploadService extends Service {
     private final static String TAG = "UploadService";
@@ -49,7 +49,7 @@ public class UploadService extends Service {
     private class JsonUploadResponse {
         public String status = null;
         public String url = null;
-        ArrayList<String> errors = new ArrayList<String>();
+        HashMap<String, String> errors = new HashMap<>();
     }
 
     private class UploadServiceHandler extends Handler {
@@ -75,6 +75,7 @@ public class UploadService extends Service {
             BufferedReader bufreader = new BufferedReader(inputreader);
 
             JsonReader reader = new JsonReader(bufreader);
+            reader.setLenient(true);
             reader.beginObject();
             while (reader.hasNext()) {
                 String field = reader.nextName();
@@ -89,13 +90,26 @@ public class UploadService extends Service {
                         Log.v(TAG, "Got URL " + response.url);
                         break;
                     }
-                    // XXX: This is not actually the error format, it'll fail miserably if there's an error.
                     case "errors": {
                         reader.beginArray();
                         while (reader.hasNext()) {
-                            String error = reader.nextString();
-                            response.errors.add(error);
-                            Log.v(TAG, "Got error '" + error + "'");
+                            reader.beginObject();
+                            String error = null, message = null;
+                            while (reader.hasNext()) {
+                                switch (reader.nextName()) {
+                                    case "error":
+                                        error = reader.nextString();
+                                        break;
+                                    case "message":
+                                        message = reader.nextString();
+                                        break;
+                                }
+                            }
+                            if (error != null && message != null) {
+                                Log.v(TAG, "Got error '" + error + "': '" + message + "'");
+                                response.errors.put(error, message);
+                            }
+                            reader.endObject();
                         }
                         reader.endArray();
                         break;
