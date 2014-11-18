@@ -124,17 +124,25 @@ public class UploadService extends Service {
 
         @Override
         public void handleMessage(Message msg) {
-            // If the message type is wrong, panic and kill everything.
-            if (msg.what != UPLOAD_IMAGE) {
-                Log.e(TAG, "Got message '" + msg.what + "' that wasn't UPLOAD_IMAGE!");
-                stopSelf();
-                return;
+            switch (msg.what) {
+                case UPLOAD_IMAGE: {
+                    Uri uri = (Uri)msg.obj;
+                    handleUploadImage(uri);
+                    Log.i(TAG, "Finished handling of '" + uri + "'");
+                    break;
+                }
+                // If the message type is wrong, panic and kill everything.
+                default:
+                    Log.e(TAG, "Got message '" + msg.what + "' that wasn't UPLOAD_IMAGE!");
+                    stopSelf();
+                    return;
             }
 
-            // arg1 is the startId, obj is the Uri.
             int startId = msg.arg1;
-            Uri uri = (Uri)msg.obj;
+            stopSelfResult(startId);
+        }
 
+        private void handleUploadImage(Uri uri) {
             final Notification.Builder nbuilder = new Notification.Builder(getApplicationContext());
             nbuilder.setSmallIcon(R.drawable.ic_launcher)
                     .setContentTitle(res.getString(R.string.uploader_notification_uploading))
@@ -224,19 +232,6 @@ public class UploadService extends Service {
 
                 Log.e(TAG, "Something went wrong in the upload!");
                 e.printStackTrace();
-            }
-            Log.i(TAG, "Finished handling of '" + uri + "'/" + startId);
-
-            // This handler is the only place stopSelf() will be called,
-            // so we can be sure that all calls will be in order.
-            boolean res = stopSelfResult(startId);
-            if (res) {
-                // Service is stopping, remove ongoing progress notification
-                stopForeground(true);
-            } else {
-                nbuilder.setProgress(100, 0, false)
-                        .setContentText("");
-                nm.notify(UPLOAD_PROGRESS_NOTIFICATION, nbuilder.getNotification());
             }
         }
 
