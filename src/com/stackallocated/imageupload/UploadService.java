@@ -145,17 +145,7 @@ public class UploadService extends Service {
         }
 
         private void handleUploadImage(Uri uri) {
-            final Notification.Builder nbuilder = new Notification.Builder(getApplicationContext());
-            nbuilder.setSmallIcon(R.drawable.ic_launcher)
-                    .setContentTitle(res.getString(R.string.uploader_notification_uploading))
-                    .setContentText(uri.toString())
-                    .setProgress(100, 0, false)
-                    .setOngoing(true);
-            startForeground(UPLOAD_PROGRESS_NOTIFICATION, nbuilder.getNotification());
-
-            // For the notification when the upload is done.
-            Notification.Builder ncompletebuilder = new Notification.Builder(getApplicationContext());
-            ncompletebuilder.setSmallIcon(R.drawable.ic_launcher);
+            final Notification.Builder notification = makeUploadProgressNotification(uri.toString());
 
             try {
                 // Here, we need to:
@@ -186,8 +176,8 @@ public class UploadService extends Service {
                         if (percent > 100) {
                             percent = 100;
                         }
-                        nbuilder.setProgress(100, percent, false);
-                        nm.notify(UPLOAD_PROGRESS_NOTIFICATION, nbuilder.getNotification());
+                        notification.setProgress(100, percent, false);
+                        nm.notify(UPLOAD_PROGRESS_NOTIFICATION, notification.build());
                         Log.v(TAG, "Total is " + bytes + " of " + imageLen);
                     }
                 });
@@ -200,18 +190,23 @@ public class UploadService extends Service {
                 Log.e(TAG, "Response: " + response.getStatusLine());
                 Log.e(TAG, "Len: " + response.getEntity().getContentLength());
 
+                // XXX should handle 404, 401, and things that aren't either 400 or 200 here before parsing JSON
+                switch (response.getStatusLine().getStatusCode()) {
+                    case 401:
+                        break;
+                    case 404:
+                        break;
+                    case 400:
+                        break;
+                }
+
                 JsonUploadResponse json = parseJsonResponse(response.getEntity().getContent());
 
                 if ("ok".equals(json.status) && json.url != null) {
                     Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
 
                     // Create successful upload notification.
-                    ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_successful))
-                                    .setContentText(json.url)
-                                    .setContentIntent(historypending)
-                                    .setAutoCancel(true);
-                    makeBigViewNotification(ncompletebuilder, original, json.url);
-                    nm.notify(json.url, UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
+                    showUploadSuccessfulNotification(notification, json.url, original);
 
                     // Store successful upload in the database.
                     HistoryDatabase db = HistoryDatabase.getInstance(getApplicationContext());
@@ -219,32 +214,62 @@ public class UploadService extends Service {
                     db.insertImage(json.url, System.currentTimeMillis(), thumbnail);
                 } else {
                     // Create upload failure notification.
-                    ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_failure))
-                                    .setContentText(uri.toString());
-                    nm.notify(uri.toString(), UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
+                    // Should do something better with the errors from the JSON here.
+                    showUploadFailureNotification(notification, uri.toString(), uri.toString());
                 }
 
                 desc.close();
             } catch (Exception e) {
-                ncompletebuilder.setContentTitle(res.getString(R.string.uploader_notification_failure))
-                                .setContentText(e.getLocalizedMessage());
-                nm.notify(uri.toString(), UPLOAD_COMPLETE_NOTIFICATION, ncompletebuilder.getNotification());
-
+                showUploadFailureNotification(notification, uri.toString(), e.getLocalizedMessage());
                 Log.e(TAG, "Something went wrong in the upload!");
                 e.printStackTrace();
             }
         }
 
-        private void makeBigViewNotification(Notification.Builder builder, Bitmap picture, String url) {
+        private void showUploadFailureNotification(final Notification.Builder notification, String tag, String msg) {
+            stopProgressNotification(notification);
+            notification.setContentTitle(res.getString(R.string.uploader_notification_failure))
+                        .setContentText(msg);
+
+            nm.notify(tag, UPLOAD_COMPLETE_NOTIFICATION, notification.build());
+        }
+
+        private void showUploadSuccessfulNotification(final Notification.Builder notification, String url, Bitmap bitmap) {
             Intent copyintent = new Intent(getApplicationContext(), ClipboardURLReceiver.class);
             copyintent.setAction(url);
             PendingIntent copypending = PendingIntent.getBroadcast(getApplicationContext(), 0, copyintent, 0);
 
-            Bitmap bigthumbnail = ImageUtils.makeThumbnail(picture, 512);
-            builder.setStyle(new Notification.BigPictureStyle().bigPicture(bigthumbnail));
-            builder.addAction(R.drawable.ic_action_copy_dark,
-                    res.getString(R.string.action_copy_url),
-                    copypending);
+            Bitmap bigthumbnail = ImageUtils.makeThumbnail(bitmap, 512);
+
+            stopProgressNotification(notification);
+            notification.setContentTitle(res.getString(R.string.uploader_notification_successful))
+                        .setContentText(url)
+                        .setContentIntent(historypending)
+                        .setAutoCancel(true)
+                        .setStyle(new Notification.BigPictureStyle().bigPicture(bigthumbnail))
+                        .addAction(R.drawable.ic_action_copy_dark,
+                                   res.getString(R.string.action_copy_url),
+                                   copypending);
+
+            nm.notify(url, UPLOAD_COMPLETE_NOTIFICATION, notification.build());
+        }
+
+        // Builds a notification that is a progress bar.
+        // This will be replaced with the final error or success notification at the end.
+        private Notification.Builder makeUploadProgressNotification(String string) {
+            final Notification.Builder builder = new Notification.Builder(getApplicationContext());
+            builder.setSmallIcon(R.drawable.ic_launcher)
+                    .setContentTitle(res.getString(R.string.uploader_notification_uploading))
+                    .setContentText(string)
+                    .setProgress(100, 0, false)
+                    .setOngoing(true);
+            startForeground(UPLOAD_PROGRESS_NOTIFICATION, builder.build());
+            return builder;
+        }
+
+        private void stopProgressNotification(Notification.Builder builder) {
+            builder.setOngoing(false)
+                   .setProgress(0, 0, false);
         }
     }
 
