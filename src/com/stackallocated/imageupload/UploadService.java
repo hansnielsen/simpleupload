@@ -56,6 +56,7 @@ public class UploadService extends Service {
         final NotificationManager nm;
         final Resources res;
         final PendingIntent historypending;
+        final SharedPreferences prefs;
         final static int UPLOAD_PROGRESS_NOTIFICATION = 1;
         final static int UPLOAD_COMPLETE_NOTIFICATION = 2;
 
@@ -63,6 +64,7 @@ public class UploadService extends Service {
             super(looper);
             res = getResources();
             nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+            prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
             Intent historyintent = new Intent(getApplicationContext(), HistoryActivity.class);
             historypending = PendingIntent.getActivity(getApplicationContext(), 0, historyintent, 0);
@@ -164,8 +166,6 @@ public class UploadService extends Service {
                 //   e) stream the image through the connection
                 //   e) retrieve the resulting URL
                 //   f) display a final notification with the URL
-
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
                 final AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(uri, "r");
                 final long imageLen = desc.getLength();
