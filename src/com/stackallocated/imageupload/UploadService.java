@@ -15,7 +15,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
 import android.app.Notification;
-import android.app.Notification.Builder;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -163,15 +162,18 @@ public class UploadService extends Service {
                 Log.e(TAG, "Response: " + response.getStatusLine());
                 Log.e(TAG, "Len: " + response.getEntity().getContentLength());
 
-                success = handleUploadResponse(response, notification, uri);
+                nm.cancel(UPLOAD_PROGRESS_NOTIFICATION);
+
+                success = handleUploadResponse(response, uri);
             } catch (Exception e) {
-                showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_generic));
+                makeUploadFailureNotification(uri.toString(), res.getString(R.string.uploader_failed_generic), false);
                 Log.e(TAG, "Something went wrong in the upload! " + e.getLocalizedMessage());
                 e.printStackTrace();
             }
 
             // If we encounter an error, bail and cancel all pending uploads.
             if (!success) {
+                Log.v(TAG, "Killing service due to error");
                 stopForeground(true);
                 stopSelf();
             }
@@ -216,23 +218,21 @@ public class UploadService extends Service {
         }
 
         // Returns false if there was an error and further uploads should be aborted.
-        private boolean handleUploadResponse(HttpResponse response, final Notification.Builder notification, Uri uri) throws IllegalStateException, IOException {
+        private boolean handleUploadResponse(HttpResponse response, Uri uri) throws IllegalStateException, IOException {
             // XXX should handle 404, 401, and things that aren't either 400 or 200 here before parsing JSON
             int statusCode = response.getStatusLine().getStatusCode();
             switch (statusCode) {
                 case 401: // Unauthorized.
                     Log.e(TAG, "Unauthorized for URL");
-                    makeNotificationGoToSettings(notification);
-                    showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_unauthorized));
+                    makeUploadFailureNotification(uri.toString(), res.getString(R.string.uploader_failed_unauthorized), true);
                     return false;
                 case 404: // Wrong URL.
                     Log.e(TAG, "Got 404 for URL");
-                    makeNotificationGoToSettings(notification);
-                    showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_wrong_url));
+                    makeUploadFailureNotification(uri.toString(), res.getString(R.string.uploader_failed_wrong_url), true);
                     return false;
                 default: // Unknown response code.
                     Log.e(TAG, "Got unknown response code " + statusCode);
-                    showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_generic));
+                    makeUploadFailureNotification(uri.toString(), res.getString(R.string.uploader_failed_generic), false);
                     return false;
                 case 200: // Success.
                 case 400: // Generic error, handled in JSON.
@@ -244,7 +244,7 @@ public class UploadService extends Service {
             if ("ok".equals(json.status) && json.url != null) {
                 // Create successful upload notification.
                 Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
-                showUploadSuccessfulNotification(notification, json.url, original);
+                makeUploadSuccessfulNotification(json.url, original);
 
                 // Store successful upload in the database.
                 HistoryDatabase db = HistoryDatabase.getInstance(getApplicationContext());
@@ -255,34 +255,35 @@ public class UploadService extends Service {
             } else {
                 // Create upload failure notification.
                 // Should do something better with the errors from the JSON here.
-                showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_generic));
+                makeUploadFailureNotification(uri.toString(), res.getString(R.string.uploader_failed_generic), false);
                 return false;
             }
         }
 
-        private void makeNotificationGoToSettings(Builder notification) {
-            notification.setContentIntent(settingsPending);
-        }
-
-        private void showUploadFailureNotification(final Notification.Builder notification, String tag, String msg) {
-            stopProgressNotification(notification);
+        private void makeUploadFailureNotification(String tag, String msg, boolean settings) {
+            final Notification.Builder notification = new Notification.Builder(getApplicationContext());
             notification.setContentTitle(res.getString(R.string.uploader_notification_failure))
-                        .setContentText(msg);
+                        .setContentText(msg)
+                        .setSmallIcon(R.drawable.ic_launcher);
+            if (settings) {
+                notification.setContentIntent(settingsPending);
+            }
 
             nm.notify(tag, UPLOAD_COMPLETE_NOTIFICATION, notification.build());
         }
 
-        private void showUploadSuccessfulNotification(final Notification.Builder notification, String url, Bitmap bitmap) {
+        private void makeUploadSuccessfulNotification(String url, Bitmap bitmap) {
             Intent copyintent = new Intent(getApplicationContext(), ClipboardURLReceiver.class);
             copyintent.setAction(url);
             PendingIntent copypending = PendingIntent.getBroadcast(getApplicationContext(), 0, copyintent, 0);
 
             Bitmap bigthumbnail = ImageUtils.makeThumbnail(bitmap, 512);
 
-            stopProgressNotification(notification);
+            final Notification.Builder notification = new Notification.Builder(getApplicationContext());
             notification.setContentTitle(res.getString(R.string.uploader_notification_successful))
                         .setContentText(url)
                         .setContentIntent(historyPending)
+                        .setSmallIcon(R.drawable.ic_launcher)
                         .setAutoCancel(true)
                         .setStyle(new Notification.BigPictureStyle().bigPicture(bigthumbnail))
                         .addAction(R.drawable.ic_action_copy_dark,
@@ -303,11 +304,6 @@ public class UploadService extends Service {
                     .setOngoing(true);
             startForeground(UPLOAD_PROGRESS_NOTIFICATION, builder.build());
             return builder;
-        }
-
-        private void stopProgressNotification(Notification.Builder builder) {
-            builder.setOngoing(false)
-                   .setProgress(0, 0, false);
         }
     }
 
