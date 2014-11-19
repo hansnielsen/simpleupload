@@ -15,6 +15,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
 import android.app.Notification;
+import android.app.Notification.Builder;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -56,7 +57,7 @@ public class UploadService extends Service {
     private class UploadServiceHandler extends Handler {
         final NotificationManager nm;
         final Resources res;
-        final PendingIntent historypending;
+        final PendingIntent historyPending, settingsPending;
         final SharedPreferences prefs;
         final static int UPLOAD_PROGRESS_NOTIFICATION = 1;
         final static int UPLOAD_COMPLETE_NOTIFICATION = 2;
@@ -67,8 +68,11 @@ public class UploadService extends Service {
             nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
             prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-            Intent historyintent = new Intent(getApplicationContext(), HistoryActivity.class);
-            historypending = PendingIntent.getActivity(getApplicationContext(), 0, historyintent, 0);
+            Intent historyIntent = new Intent(getApplicationContext(), HistoryActivity.class);
+            historyPending = PendingIntent.getActivity(getApplicationContext(), 0, historyIntent, 0);
+
+            Intent settingsIntent = new Intent(getApplicationContext(), SettingsActivity.class);
+            settingsPending = PendingIntent.getActivity(getApplicationContext(), 0, settingsIntent, 0);
         }
 
         JsonUploadResponse parseJsonResponse(InputStream input) throws IOException {
@@ -218,13 +222,13 @@ public class UploadService extends Service {
             switch (statusCode) {
                 case 401: // Unauthorized.
                     Log.e(TAG, "Unauthorized for URL");
+                    makeNotificationGoToSettings(notification);
                     showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_unauthorized));
-                    // Add intent to redirect to settings pane
                     return false;
                 case 404: // Wrong URL.
                     Log.e(TAG, "Got 404 for URL");
+                    makeNotificationGoToSettings(notification);
                     showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_wrong_url));
-                    // Add intent to redirect to settings pane
                     return false;
                 default: // Unknown response code.
                     Log.e(TAG, "Got unknown response code " + statusCode);
@@ -256,6 +260,10 @@ public class UploadService extends Service {
             }
         }
 
+        private void makeNotificationGoToSettings(Builder notification) {
+            notification.setContentIntent(settingsPending);
+        }
+
         private void showUploadFailureNotification(final Notification.Builder notification, String tag, String msg) {
             stopProgressNotification(notification);
             notification.setContentTitle(res.getString(R.string.uploader_notification_failure))
@@ -274,7 +282,7 @@ public class UploadService extends Service {
             stopProgressNotification(notification);
             notification.setContentTitle(res.getString(R.string.uploader_notification_successful))
                         .setContentText(url)
-                        .setContentIntent(historypending)
+                        .setContentIntent(historyPending)
                         .setAutoCancel(true)
                         .setStyle(new Notification.BigPictureStyle().bigPicture(bigthumbnail))
                         .addAction(R.drawable.ic_action_copy_dark,
