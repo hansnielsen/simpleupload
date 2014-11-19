@@ -1,7 +1,5 @@
 package com.stackallocated.imageupload;
 
-import com.stackallocated.util.PreferenceUtils;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -20,16 +18,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AbsListView.MultiChoiceModeListener;
-import android.widget.CursorAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
 
+import com.stackallocated.util.PreferenceUtils;
+
 public class HistoryActivity extends Activity {
     private final static String TAG = "MainActivity";
     private final static int REQUEST_IMAGE_GET = 1;
+
+    HistoryCursorAdapter adapter;
 
     class HistoryCursorAdapter extends ResourceCursorAdapter {
         public HistoryCursorAdapter(Context context, int layout, Cursor c, int flags) {
@@ -82,7 +83,7 @@ public class HistoryActivity extends Activity {
         HistoryDatabase.getInstance(this).deleteImages(ids);
     }
 
-    private void updateHistoryCursor(CursorAdapter adapter) {
+    private void updateHistoryCursor() {
         Cursor images = HistoryDatabase.getInstance(this).getImages();
         adapter.changeCursor(images);
     }
@@ -93,8 +94,8 @@ public class HistoryActivity extends Activity {
 
         setContentView(R.layout.activity_history);
 
-        final HistoryCursorAdapter adapter = new HistoryCursorAdapter(this, R.layout.history_list_item, null, 0);
-        updateHistoryCursor(adapter);
+        adapter = new HistoryCursorAdapter(this, R.layout.history_list_item, null, 0);
+        updateHistoryCursor();
 
         final ListView list = (ListView) findViewById(R.id.history_list);
         list.setAdapter(adapter);
@@ -123,7 +124,7 @@ public class HistoryActivity extends Activity {
                         // We can just have the DB delete them. There are no issues with
                         // race conditions because the IDs are the real row IDs.
                         deleteImages(list.getCheckedItemIds());
-                        updateHistoryCursor(adapter);
+                        updateHistoryCursor();
                         mode.finish();
                         return true;
                 }
@@ -158,8 +159,7 @@ public class HistoryActivity extends Activity {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     HistoryDatabase.getInstance(getApplicationContext()).deleteAllImages();
-                    ListView view = (ListView)findViewById(R.id.history_list);
-                    updateHistoryCursor((CursorAdapter)view.getAdapter());
+                    updateHistoryCursor();
                 }
             };
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
