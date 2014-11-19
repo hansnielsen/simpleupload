@@ -1,5 +1,7 @@
 package com.stackallocated.imageupload;
 
+import com.stackallocated.util.PreferenceUtils;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -168,6 +170,10 @@ public class HistoryActivity extends Activity {
             builder.show();
             return true;
         } else if (id == R.id.action_upload) {
+            if (PreferenceUtils.checkForUnsetPreferences(this)) {
+                return true;
+            }
+
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.setType("image/*");
             if (intent.resolveActivity(getPackageManager()) != null) {

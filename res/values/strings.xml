@@ -32,6 +32,8 @@
 	<string name="clipboardreceiver_copied">Copied image URL</string>
 	<string name="clipboardreceiver_label">Image URL</string>
 
+	<string name="settings_must_be_filled_out">All settings must be filled out to upload images.</string>
+
 	<string name="pref_activity_name">SimpleUpload Settings</string>
     <string name="pref_category_user">User</string>
     <string name="pref_upload_username">Username</string>

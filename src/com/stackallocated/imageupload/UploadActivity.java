@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.stackallocated.util.PreferenceUtils;
+
 public class UploadActivity extends Activity {
     private final static String TAG = "UploadActivity";
 
@@ -45,6 +47,11 @@ public class UploadActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (PreferenceUtils.checkForUnsetPreferences(this)) {
+            finish();
+            return;
+        }
 
         final Resources res = getResources();
 
