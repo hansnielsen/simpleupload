@@ -8,6 +8,7 @@ import java.util.HashMap;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -141,88 +142,101 @@ public class UploadService extends Service {
             }
 
             int startId = msg.arg1;
-            stopSelfResult(startId);
+            boolean ret = stopSelfResult(startId);
+            if (ret) {
+                stopForeground(true);
+            }
         }
 
         private void handleUploadImage(Uri uri) {
             final Notification.Builder notification = makeUploadProgressNotification(uri.toString());
 
             try {
-                // Here, we need to:
-                //   a) get the HTTP endpoint / credentials
-                //   b) open the image
-                //   c) display a progress notification
-                //   d) open an HTTP connection
-                //   e) stream the image through the connection
-                //   e) retrieve the resulting URL
-                //   f) display a final notification with the URL
+                HttpEntity uploadEntity = makeUploadEntity(uri, notification);
+                HttpResponse response = performUploadRequest(uploadEntity);
 
-                final AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(uri, "r");
-                final long imageLen = desc.getLength();
-                Log.v(TAG, "Image length is " + imageLen);
-
-                String credentials = Uri.encode(prefs.getString(SettingsActivity.KEY_UPLOAD_USERNAME, "")) + ":" +
-                                     Uri.encode(prefs.getString(SettingsActivity.KEY_UPLOAD_PASSWORD, ""));
-                String authHeader = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
-
-                HttpEntity entity = MultipartEntityBuilder.create()
-                    .addBinaryBody("upload", desc.createInputStream(), ContentType.DEFAULT_BINARY, uri.getLastPathSegment())
-                    .build();
-
-                HttpEntity wrapper = new ProgressHttpEntityWrapper(entity, new ProgressListener() {
-                    @Override
-                    public void progress(long bytes) {
-                        int percent = (int)((100 * bytes) / imageLen);
-                        if (percent > 100) {
-                            percent = 100;
-                        }
-                        notification.setProgress(100, percent, false);
-                        nm.notify(UPLOAD_PROGRESS_NOTIFICATION, notification.build());
-                        Log.v(TAG, "Total is " + bytes + " of " + imageLen);
-                    }
-                });
-
-                HttpClient client = AndroidHttpClient.newInstance(res.getString(R.string.http_user_agent));
-                HttpPost post = new HttpPost(prefs.getString(SettingsActivity.KEY_UPLOAD_URL, ""));
-                post.setHeader("Authorization", authHeader);
-                post.setEntity(wrapper);
-                HttpResponse response = client.execute(post);
                 Log.e(TAG, "Response: " + response.getStatusLine());
                 Log.e(TAG, "Len: " + response.getEntity().getContentLength());
 
-                // XXX should handle 404, 401, and things that aren't either 400 or 200 here before parsing JSON
-                switch (response.getStatusLine().getStatusCode()) {
-                    case 401:
-                        break;
-                    case 404:
-                        break;
-                    case 400:
-                        break;
-                }
-
-                JsonUploadResponse json = parseJsonResponse(response.getEntity().getContent());
-
-                if ("ok".equals(json.status) && json.url != null) {
-                    Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
-
-                    // Create successful upload notification.
-                    showUploadSuccessfulNotification(notification, json.url, original);
-
-                    // Store successful upload in the database.
-                    HistoryDatabase db = HistoryDatabase.getInstance(getApplicationContext());
-                    Bitmap thumbnail = ImageUtils.makeThumbnail(original, 128);
-                    db.insertImage(json.url, System.currentTimeMillis(), thumbnail);
-                } else {
-                    // Create upload failure notification.
-                    // Should do something better with the errors from the JSON here.
-                    showUploadFailureNotification(notification, uri.toString(), uri.toString());
-                }
-
-                desc.close();
+                handleUploadResponse(response, notification, uri);
             } catch (Exception e) {
                 showUploadFailureNotification(notification, uri.toString(), e.getLocalizedMessage());
                 Log.e(TAG, "Something went wrong in the upload!");
                 e.printStackTrace();
+            }
+        }
+
+        private HttpEntity makeUploadEntity(Uri uri, final Notification.Builder notification) throws IOException {
+            AssetFileDescriptor desc = getContentResolver().openAssetFileDescriptor(uri, "r");
+            final long imageLen = desc.getLength();
+            Log.v(TAG, "Image length is " + imageLen);
+
+            MultipartEntityBuilder entity = MultipartEntityBuilder.create();
+            entity.addBinaryBody("upload",
+                                 desc.createInputStream(),
+                                 ContentType.DEFAULT_BINARY,
+                                 uri.getLastPathSegment());
+
+            HttpEntity wrapper = new ProgressHttpEntityWrapper((HttpEntity)entity.build(), new ProgressListener() {
+                @Override
+                public void progress(long bytes) {
+                    int percent = (int)((100 * bytes) / imageLen);
+                    if (percent > 100) {
+                        percent = 100;
+                    }
+                    notification.setProgress(100, percent, false);
+                    nm.notify(UPLOAD_PROGRESS_NOTIFICATION, notification.build());
+                    Log.v(TAG, "Total is " + bytes + " of " + imageLen);
+                }
+            });
+            return wrapper;
+        }
+
+        private HttpResponse performUploadRequest(HttpEntity uploadEntity) throws ClientProtocolException, IOException {
+            String credentials = Uri.encode(prefs.getString(SettingsActivity.KEY_UPLOAD_USERNAME, "")) + ":" +
+                                 Uri.encode(prefs.getString(SettingsActivity.KEY_UPLOAD_PASSWORD, ""));
+            String authHeader = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
+
+            HttpClient client = AndroidHttpClient.newInstance(res.getString(R.string.http_user_agent));
+            HttpPost post = new HttpPost(prefs.getString(SettingsActivity.KEY_UPLOAD_URL, ""));
+            post.setHeader("Authorization", authHeader);
+            post.setEntity(uploadEntity);
+            return client.execute(post);
+        }
+
+        private void handleUploadResponse(HttpResponse response, final Notification.Builder notification, Uri uri) throws IllegalStateException, IOException {
+            // XXX should handle 404, 401, and things that aren't either 400 or 200 here before parsing JSON
+            int statusCode = response.getStatusLine().getStatusCode();
+            switch (statusCode) {
+                case 401: // Unauthorized.
+                    Log.e(TAG, "Unauthorized for URL");
+                    break;
+                case 404: // Wrong URL.
+                    Log.e(TAG, "Got 404 for URL");
+                    break;
+                default: // Unknown response code.
+                    Log.e(TAG, "Got unknown response code " + statusCode);
+                    break;
+                case 200: // Success.
+                case 400: // Generic error, handled in JSON.
+                    break;
+            }
+
+            JsonUploadResponse json = parseJsonResponse(response.getEntity().getContent());
+
+            if ("ok".equals(json.status) && json.url != null) {
+                // Create successful upload notification.
+                Bitmap original = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), uri);
+                showUploadSuccessfulNotification(notification, json.url, original);
+
+                // Store successful upload in the database.
+                HistoryDatabase db = HistoryDatabase.getInstance(getApplicationContext());
+                Bitmap thumbnail = ImageUtils.makeThumbnail(original, 128);
+                db.insertImage(json.url, System.currentTimeMillis(), thumbnail);
+            } else {
+                // Create upload failure notification.
+                // Should do something better with the errors from the JSON here.
+                showUploadFailureNotification(notification, uri.toString(), uri.toString());
             }
         }
 
