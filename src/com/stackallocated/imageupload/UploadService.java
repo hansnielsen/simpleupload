@@ -251,6 +251,10 @@ public class UploadService extends Service {
                 Bitmap thumbnail = ImageUtils.makeThumbnail(original, 128);
                 db.insertImage(json.url, System.currentTimeMillis(), thumbnail);
 
+                // XXX This gets sent to every app on the system.
+                Intent updateHistory = new Intent(HistoryActivity.UPDATE_HISTORY);
+                sendBroadcast(updateHistory);
+
                 return true;
             } else {
                 // Create upload failure notification.

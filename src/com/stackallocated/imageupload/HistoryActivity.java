@@ -2,9 +2,11 @@ package com.stackallocated.imageupload;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -29,8 +31,10 @@ import com.stackallocated.util.PreferenceUtils;
 public class HistoryActivity extends Activity {
     private final static String TAG = "MainActivity";
     private final static int REQUEST_IMAGE_GET = 1;
+    public final static String UPDATE_HISTORY = "com.stackallocated.imageupload.HistoryActivity.updateHistoryCursor";
 
     HistoryCursorAdapter adapter;
+    final BroadcastReceiver historyReceiver = new HistoryUpdateReceiver(this);
 
     class HistoryCursorAdapter extends ResourceCursorAdapter {
         public HistoryCursorAdapter(Context context, int layout, Cursor c, int flags) {
@@ -86,6 +90,31 @@ public class HistoryActivity extends Activity {
     private void updateHistoryCursor() {
         Cursor images = HistoryDatabase.getInstance(this).getImages();
         adapter.changeCursor(images);
+    }
+
+    class HistoryUpdateReceiver extends BroadcastReceiver {
+        HistoryActivity activity;
+
+        public HistoryUpdateReceiver(HistoryActivity activity) {
+            this.activity = activity;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            activity.updateHistoryCursor();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(historyReceiver);
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        registerReceiver(historyReceiver, new IntentFilter(UPDATE_HISTORY));
+        super.onResume();
     }
 
     @Override
