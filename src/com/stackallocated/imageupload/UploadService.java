@@ -150,6 +150,7 @@ public class UploadService extends Service {
 
         private void handleUploadImage(Uri uri) {
             final Notification.Builder notification = makeUploadProgressNotification(uri.toString());
+            boolean success = false;
 
             try {
                 HttpEntity uploadEntity = makeUploadEntity(uri, notification);
@@ -158,11 +159,17 @@ public class UploadService extends Service {
                 Log.e(TAG, "Response: " + response.getStatusLine());
                 Log.e(TAG, "Len: " + response.getEntity().getContentLength());
 
-                handleUploadResponse(response, notification, uri);
+                success = handleUploadResponse(response, notification, uri);
             } catch (Exception e) {
-                showUploadFailureNotification(notification, uri.toString(), e.getLocalizedMessage());
-                Log.e(TAG, "Something went wrong in the upload!");
+                showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_generic));
+                Log.e(TAG, "Something went wrong in the upload! " + e.getLocalizedMessage());
                 e.printStackTrace();
+            }
+
+            // If we encounter an error, bail and cancel all pending uploads.
+            if (!success) {
+                stopForeground(true);
+                stopSelf();
             }
         }
 
@@ -204,19 +211,25 @@ public class UploadService extends Service {
             return client.execute(post);
         }
 
-        private void handleUploadResponse(HttpResponse response, final Notification.Builder notification, Uri uri) throws IllegalStateException, IOException {
+        // Returns false if there was an error and further uploads should be aborted.
+        private boolean handleUploadResponse(HttpResponse response, final Notification.Builder notification, Uri uri) throws IllegalStateException, IOException {
             // XXX should handle 404, 401, and things that aren't either 400 or 200 here before parsing JSON
             int statusCode = response.getStatusLine().getStatusCode();
             switch (statusCode) {
                 case 401: // Unauthorized.
                     Log.e(TAG, "Unauthorized for URL");
-                    break;
+                    showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_unauthorized));
+                    // Add intent to redirect to settings pane
+                    return false;
                 case 404: // Wrong URL.
                     Log.e(TAG, "Got 404 for URL");
-                    break;
+                    showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_wrong_url));
+                    // Add intent to redirect to settings pane
+                    return false;
                 default: // Unknown response code.
                     Log.e(TAG, "Got unknown response code " + statusCode);
-                    break;
+                    showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_generic));
+                    return false;
                 case 200: // Success.
                 case 400: // Generic error, handled in JSON.
                     break;
@@ -233,10 +246,13 @@ public class UploadService extends Service {
                 HistoryDatabase db = HistoryDatabase.getInstance(getApplicationContext());
                 Bitmap thumbnail = ImageUtils.makeThumbnail(original, 128);
                 db.insertImage(json.url, System.currentTimeMillis(), thumbnail);
+
+                return true;
             } else {
                 // Create upload failure notification.
                 // Should do something better with the errors from the JSON here.
-                showUploadFailureNotification(notification, uri.toString(), uri.toString());
+                showUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_generic));
+                return false;
             }
         }
 
