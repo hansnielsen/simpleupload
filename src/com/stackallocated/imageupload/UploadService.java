@@ -33,6 +33,7 @@ import android.os.Message;
 import android.os.Process;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.util.JsonReader;
 import android.util.Log;
@@ -251,9 +252,9 @@ public class UploadService extends Service {
                 Bitmap thumbnail = ImageUtils.makeThumbnail(original, 128);
                 db.insertImage(json.url, System.currentTimeMillis(), thumbnail);
 
-                // XXX This gets sent to every app on the system.
+                // Update the history activity if it's visible.
                 Intent updateHistory = new Intent(HistoryActivity.UPDATE_HISTORY);
-                sendBroadcast(updateHistory);
+                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(updateHistory);
 
                 return true;
             } else {

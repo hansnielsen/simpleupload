@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.format.DateUtils;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -107,13 +108,13 @@ public class HistoryActivity extends Activity {
 
     @Override
     protected void onPause() {
-        unregisterReceiver(historyReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(historyReceiver);
         super.onPause();
     }
 
     @Override
     protected void onResume() {
-        registerReceiver(historyReceiver, new IntentFilter(UPDATE_HISTORY));
+        LocalBroadcastManager.getInstance(this).registerReceiver(historyReceiver, new IntentFilter(UPDATE_HISTORY));
         super.onResume();
     }
 
