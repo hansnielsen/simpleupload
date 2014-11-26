@@ -1,5 +1,6 @@
 package com.stackallocated.imageupload;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -82,12 +83,10 @@ public class UploadActivity extends Activity {
         int images = imageUris.size();
         makeToast(res.getQuantityString(R.plurals.uploader_uploading_toast, images, images));
 
-        // Repeated intent creation is so that killing of the upload
-        // service doesn't require fancy handling of intents.
-        for (Uri imageUri : imageUris) {
-            Log.d(TAG, "Enqueuing image '" + imageUri + "'");
+        // Make the intent with a pile of URIs.
+        if (imageUris.size() > 0) {
             Intent i = new Intent(this, UploadService.class);
-            i.putExtra(Intent.EXTRA_STREAM, imageUri);
+            i.putExtra(UploadService.EXTRA_URIS, (Serializable)imageUris);
             startService(i);
         }
 
