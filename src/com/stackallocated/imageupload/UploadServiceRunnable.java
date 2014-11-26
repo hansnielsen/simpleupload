@@ -133,8 +133,7 @@ class UploadServiceRunnable implements Runnable {
             uri = service.pendingUris.poll();
         }
         Log.i(TAG, "Done processing URIs");
-        service.stopForeground(true);
-        service.stopSelf();
+        service.finish();
     }
 
     private void handleUploadImage(Uri uri) {
@@ -160,8 +159,7 @@ class UploadServiceRunnable implements Runnable {
         // If we encounter an error, bail and cancel all pending uploads.
         if (!success) {
             Log.v(UploadService.TAG, "Killing service due to error");
-            service.stopForeground(true);
-            service.stopSelf();
+            service.finish();
         }
     }
 

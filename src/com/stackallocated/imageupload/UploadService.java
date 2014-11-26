@@ -19,6 +19,14 @@ public class UploadService extends Service {
 
     protected BlockingQueue<Uri> pendingUris = new LinkedBlockingQueue<>();
 
+    protected void finish() {
+        // Note that there is a non-zero chance new items could have been added to the service.
+        // Oh well.
+        pendingUris.clear();
+        stopForeground(true);
+        stopSelf();
+    }
+
     @Override
     public void onCreate() {
         Log.i(TAG, "Starting upload service");
