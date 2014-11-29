@@ -281,7 +281,8 @@ class UploadServiceRunnable implements Runnable {
         if ("ok".equals(json.status) && json.url != null) {
             // Build successful upload notification.
             Bitmap original = MediaStore.Images.Media.getBitmap(service.getContentResolver(), uri);
-            makeUploadSuccessfulNotification(notification, json.url, original);
+            Uri result = Uri.parse(json.url);
+            makeUploadSuccessfulNotification(notification, result.getLastPathSegment(), original);
 
             // Store successful upload in the database.
             HistoryDatabase db = HistoryDatabase.getInstance(service);
