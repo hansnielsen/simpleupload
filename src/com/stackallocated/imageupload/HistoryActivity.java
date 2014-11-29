@@ -30,7 +30,6 @@ import android.widget.TextView;
 import com.stackallocated.util.PreferenceUtils;
 
 public class HistoryActivity extends Activity {
-    private final static String TAG = "MainActivity";
     private final static int REQUEST_IMAGE_GET = 1;
     public final static String UPDATE_HISTORY = "com.stackallocated.imageupload.HistoryActivity.updateHistoryCursor";
 

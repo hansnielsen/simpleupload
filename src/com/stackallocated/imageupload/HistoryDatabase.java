@@ -57,7 +57,7 @@ public class HistoryDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        Log.e(TAG, "Got onUpgrade from " + oldVersion + " to " + newVersion + ", ignoring");
+        Log.w(TAG, "Got onUpgrade from " + oldVersion + " to " + newVersion + ", ignoring");
     }
 
     public void insertImage(String url, long uploadedDate, Bitmap thumbnail) {
@@ -79,7 +79,7 @@ public class HistoryDatabase extends SQLiteOpenHelper {
     }
 
     public void deleteAllImages() {
-        Log.v(TAG, "Deleting all image history!");
+        Log.i(TAG, "Deleting all image history!");
         getWritableDatabase().delete(IMAGES_TABLE_NAME, "1", null);
     }
 

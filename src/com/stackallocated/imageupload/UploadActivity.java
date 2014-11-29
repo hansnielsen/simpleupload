@@ -60,13 +60,9 @@ public class UploadActivity extends Activity {
         final Intent intent = getIntent();
         // We have an image to upload, get list of images.
         if (Intent.ACTION_SEND.equals(intent.getAction())) {
-            Log.v(TAG, "Got send action");
-
             Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
             imageUris.add(imageUri);
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())) {
-            Log.v(TAG, "Got multiple send action");
-
             try {
                 ArrayList<Uri> extraImageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
                 imageUris.addAll(extraImageUris);

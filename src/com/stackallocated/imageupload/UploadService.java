@@ -40,10 +40,10 @@ public class UploadService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (!thread.isAlive()) {
-            Log.e(TAG, "Thread is dead in onStartCommand!");
+            Log.w(TAG, "Thread is dead in onStartCommand!");
+            return START_NOT_STICKY;
         }
 
-        Log.v(TAG, "Got intent " + intent);
         switch (intent.getAction()) {
             case ACTION_UPLOAD:
                 // This just shoves the URIs in the concurrent queue and lets the thread handle it.
@@ -54,7 +54,7 @@ public class UploadService extends Service {
                 runnable.updateUploadProgressNotification(false);
                 break;
             case ACTION_CANCEL:
-                Log.e(TAG, "Cancelling!");
+                Log.i(TAG, "Cancelling!");
                 runnable.abort();
                 finish();
                 break;
@@ -66,11 +66,7 @@ public class UploadService extends Service {
 
     @Override
     public void onDestroy() {
-        if (pendingUris.size() > 0) {
-            Log.e(TAG, "Upload service stopped with " + pendingUris.size() + " remaining!");
-        } else {
-            Log.i(TAG, "Stopping upload service");
-        }
+        Log.i(TAG, "Upload service stopped with " + pendingUris.size() + " remaining!");
     }
 
     // Have to override this, even though we don't use it.

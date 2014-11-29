@@ -149,7 +149,7 @@ class UploadServiceRunnable implements Runnable {
             nm.notify(UPLOAD_PROGRESS_NOTIFICATION, progressNotification.build());
 
             boolean status = handleUploadImage(uri, progressNotification);
-            Log.i(TAG, "Finished handling of '" + uri + "'");
+            Log.d(TAG, "Finished handling of '" + uri + "'");
             if (!status || aborted) {
                 break;
             }
@@ -170,8 +170,8 @@ class UploadServiceRunnable implements Runnable {
             HttpEntity uploadEntity = makeUploadEntity(uri, progressNotification);
             HttpResponse response = performUploadRequest(uploadEntity);
 
-            Log.e(UploadService.TAG, "Response: " + response.getStatusLine());
-            Log.e(UploadService.TAG, "Len: " + response.getEntity().getContentLength());
+            Log.v(UploadService.TAG, "Response: " + response.getStatusLine());
+            Log.v(UploadService.TAG, "Len: " + response.getEntity().getContentLength());
 
             success = handleUploadResponse(response, uri, notification);
         } catch (Exception e) {
@@ -210,7 +210,6 @@ class UploadServiceRunnable implements Runnable {
                 }
                 notification.setProgress(100, percent, false);
                 nm.notify(UPLOAD_PROGRESS_NOTIFICATION, notification.build());
-                Log.v(UploadService.TAG, "Total is " + bytes + " of " + imageLen);
             }
         });
         return wrapper;
