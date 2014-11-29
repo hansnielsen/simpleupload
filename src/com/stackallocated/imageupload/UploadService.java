@@ -51,6 +51,7 @@ public class UploadService extends Service {
                 @SuppressWarnings("unchecked")
                 ArrayList<Uri> imageUris = (ArrayList<Uri>)intent.getSerializableExtra(EXTRA_URIS);
                 pendingUris.addAll(imageUris);
+                runnable.updateUploadProgressNotification(false);
                 break;
             case ACTION_CANCEL:
                 Log.e(TAG, "Cancelling!");

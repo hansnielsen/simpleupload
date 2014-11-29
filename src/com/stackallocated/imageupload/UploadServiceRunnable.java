@@ -40,11 +40,13 @@ class UploadServiceRunnable implements Runnable {
     private final UploadService service;
     private AbortableHttpRequest abortableRequest = null;
     private boolean aborted = false;
+    private int uploaded = 0;
 
     final NotificationManager nm;
     final Resources res;
     final PendingIntent historyPending, settingsPending, cancelPending;
     final SharedPreferences prefs;
+    final Builder progressNotification;
     final static int UPLOAD_PROGRESS_NOTIFICATION = 1;
     final static int UPLOAD_COMPLETE_NOTIFICATION = 2;
     final static String TAG = "UploadServiceRunnable";
@@ -71,6 +73,8 @@ class UploadServiceRunnable implements Runnable {
         Intent cancelIntent = new Intent(service, UploadService.class);
         cancelIntent.setAction(UploadService.ACTION_CANCEL);
         cancelPending = PendingIntent.getService(service, 0, cancelIntent, 0);
+
+        progressNotification = makeUploadProgressNotification();
     }
 
     JsonUploadResponse parseJsonResponse(InputStream input) throws IOException {
@@ -128,7 +132,6 @@ class UploadServiceRunnable implements Runnable {
     }
 
     public void run() {
-        int uploaded = 0;
         // Block on the first URI.
         Uri uri = null;
         try {
@@ -137,13 +140,12 @@ class UploadServiceRunnable implements Runnable {
             Log.e(TAG, "Interrupted while waiting for a URI, bailing");
         }
 
-        final Builder progressNotification = makeUploadProgressNotification();
         service.startForeground(UPLOAD_PROGRESS_NOTIFICATION, progressNotification.build());
 
         while (uri != null) {
-            resetUploadProgressNotification(progressNotification,
-                                            uploaded + 1,
-                                            service.pendingUris.size() + uploaded + 1);
+            uploaded++;
+
+            updateUploadProgressNotification(true);
             nm.notify(UPLOAD_PROGRESS_NOTIFICATION, progressNotification.build());
 
             boolean status = handleUploadImage(uri, progressNotification);
@@ -152,7 +154,6 @@ class UploadServiceRunnable implements Runnable {
                 break;
             }
 
-            uploaded++;
             uri = service.pendingUris.poll();
         }
         nm.cancel(UPLOAD_PROGRESS_NOTIFICATION);
@@ -338,10 +339,14 @@ class UploadServiceRunnable implements Runnable {
         return builder;
     }
 
-    private void resetUploadProgressNotification(Builder notification, int i, int n) {
-        notification.setProgress(100, 0, false);
-        if (n > 1) {
-            notification.setContentText(res.getString(R.string.uploader_notification_quantity, i, n));
+    synchronized void updateUploadProgressNotification(boolean reset) {
+        if (reset) {
+            progressNotification.setProgress(100, 0, false);
+        }
+
+        int total = service.pendingUris.size() + uploaded;
+        if (total > 1) {
+            progressNotification.setContentText(res.getString(R.string.uploader_notification_quantity, uploaded, total));
         }
     }
 }
