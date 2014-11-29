@@ -46,4 +46,12 @@
     <string name="pref_upload_password_empty">No password set</string>
     <string name="pref_upload_url_empty">No URL set</string>
 
+    <string name="pref_category_about">About</string>
+    <string name="pref_about_version">version %s</string>
+    <string name="pref_about_website">Website</string>
+    <string name="pref_about_website_detail">http://www.stackallocated.com/</string>
+    <string name="pref_about_email">E-mail</string>
+    <string name="pref_about_email_detail">hans@stackallocated.com</string>
+    <string name="pref_about_email_link">mailto:hans@stackallocated.com</string>
+    <string name="pref_about_email_subject">Feedback about SimpleUpload</string>
 </resources>

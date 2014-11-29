@@ -20,4 +20,25 @@
             android:hint="https://www.example.com/upload"
             android:inputType="textUri"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_category_about">
+        <Preference
+            android:key="pref_about_version"
+            android:title="@string/app_name"/>
+        <Preference
+            android:title="@string/pref_about_website"
+            android:summary="@string/pref_about_website_detail">
+			<intent
+				android:action="android.intent.action.VIEW"
+			    android:data="@string/pref_about_website_detail"/>
+        </Preference>
+        <Preference
+            android:title="@string/pref_about_email"
+            android:summary="@string/pref_about_email_detail">
+			<intent
+				android:action="android.intent.action.VIEW"
+			    android:data="@string/pref_about_email_link">
+			    <extra android:name="android.intent.extra.SUBJECT" android:value="@string/pref_about_email_subject" />
+			</intent>
+		</Preference>
+    </PreferenceCategory>
 </PreferenceScreen>
