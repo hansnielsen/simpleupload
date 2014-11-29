@@ -9,6 +9,7 @@ import java.util.HashMap;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.AbortableHttpRequest;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -37,10 +38,12 @@ import com.stackallocated.util.ProgressListener;
 
 class UploadServiceRunnable implements Runnable {
     private final UploadService service;
+    private AbortableHttpRequest abortableRequest = null;
+    private boolean aborted = false;
 
     final NotificationManager nm;
     final Resources res;
-    final PendingIntent historyPending, settingsPending;
+    final PendingIntent historyPending, settingsPending, cancelPending;
     final SharedPreferences prefs;
     final static int UPLOAD_PROGRESS_NOTIFICATION = 1;
     final static int UPLOAD_COMPLETE_NOTIFICATION = 2;
@@ -64,6 +67,10 @@ class UploadServiceRunnable implements Runnable {
 
         Intent settingsIntent = new Intent(service, SettingsActivity.class);
         settingsPending = PendingIntent.getActivity(service, 0, settingsIntent, 0);
+
+        Intent cancelIntent = new Intent(service, UploadService.class);
+        cancelIntent.setAction(UploadService.ACTION_CANCEL);
+        cancelPending = PendingIntent.getService(service, 0, cancelIntent, 0);
     }
 
     JsonUploadResponse parseJsonResponse(InputStream input) throws IOException {
@@ -138,9 +145,10 @@ class UploadServiceRunnable implements Runnable {
 
             boolean status = handleUploadImage(uri, progressNotification);
             Log.i(TAG, "Finished handling of '" + uri + "'");
-            if (!status) {
+            if (!status || aborted) {
                 break;
             }
+
             uri = service.pendingUris.poll();
         }
         nm.cancel(UPLOAD_PROGRESS_NOTIFICATION);
@@ -150,7 +158,7 @@ class UploadServiceRunnable implements Runnable {
     }
 
     private boolean handleUploadImage(Uri uri, Builder progressNotification) {
-        boolean status = false;
+        boolean success = false;
         Builder notification = makeUploadFinishedNotification();
 
         try {
@@ -160,15 +168,21 @@ class UploadServiceRunnable implements Runnable {
             Log.e(UploadService.TAG, "Response: " + response.getStatusLine());
             Log.e(UploadService.TAG, "Len: " + response.getEntity().getContentLength());
 
-            status = handleUploadResponse(response, uri, notification);
+            success = handleUploadResponse(response, uri, notification);
         } catch (Exception e) {
             makeUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_generic), false);
-            Log.e(UploadService.TAG, "Something went wrong in the upload! " + e.getLocalizedMessage());
-            e.printStackTrace();
+            if (!aborted) {
+                Log.e(UploadService.TAG, "Something went wrong in the upload! " + e.getLocalizedMessage());
+                e.printStackTrace();
+            }
         }
 
-        nm.notify(uri.toString(), UPLOAD_COMPLETE_NOTIFICATION, notification.build());
-        return status;
+        // Only show failures if the upload wasn't aborted.
+        if (!aborted || success) {
+            nm.notify(uri.toString(), UPLOAD_COMPLETE_NOTIFICATION, notification.build());
+        }
+
+        return success;
     }
 
     private HttpEntity makeUploadEntity(Uri uri, final Builder notification) throws IOException {
@@ -197,6 +211,16 @@ class UploadServiceRunnable implements Runnable {
         return wrapper;
     }
 
+    public void abort() {
+        aborted = true;
+        if (abortableRequest != null) {
+            Log.i(TAG, "Aborting request!");
+            abortableRequest.abort();
+        } else {
+            Log.e(TAG, "Request aborted, but no current request?");
+        }
+    }
+
     private HttpResponse performUploadRequest(HttpEntity uploadEntity) throws ClientProtocolException, IOException {
         String credentials = Uri.encode(prefs.getString(SettingsActivity.KEY_UPLOAD_USERNAME, "")) + ":" +
                              Uri.encode(prefs.getString(SettingsActivity.KEY_UPLOAD_PASSWORD, ""));
@@ -206,7 +230,15 @@ class UploadServiceRunnable implements Runnable {
         HttpPost post = new HttpPost(prefs.getString(SettingsActivity.KEY_UPLOAD_URL, ""));
         post.setHeader("Authorization", authHeader);
         post.setEntity(uploadEntity);
+        abortableRequest = post;
+        if (aborted) {
+            Log.i(TAG, "Not executing upload since upload was aborted");
+            return null;
+        }
         HttpResponse response = client.execute(post);
+        // Note that even though the request could have been aborted, we don't bother
+        // handling that at all after this point.
+        abortableRequest = null;
         client.close();
         
         return response;
@@ -295,7 +327,10 @@ class UploadServiceRunnable implements Runnable {
         final Builder builder = new Builder(service);
         builder.setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle(res.getString(R.string.uploader_notification_uploading))
-                .setOngoing(true);
+                .setOngoing(true)
+                .addAction(R.drawable.ic_action_cancel_dark,
+                           res.getString(R.string.action_cancel_upload),
+                           cancelPending);
         return builder;
     }
 

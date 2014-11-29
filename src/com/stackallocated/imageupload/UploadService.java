@@ -13,16 +13,16 @@ import android.util.Log;
 
 public class UploadService extends Service {
     final static String TAG = "UploadService";
+    private UploadServiceRunnable runnable;
     private Thread thread;
 
+    public final static String ACTION_UPLOAD = "upload";
+    public final static String ACTION_CANCEL = "cancel";
     public final static String EXTRA_URIS = "com.stackallocated.imageupload.EXTRA_URIS";
 
     protected BlockingQueue<Uri> pendingUris = new LinkedBlockingQueue<>();
 
     protected void finish() {
-        // Note that there is a non-zero chance new items could have been added to the service.
-        // Oh well.
-        pendingUris.clear();
         stopForeground(true);
         stopSelf();
     }
@@ -31,7 +31,8 @@ public class UploadService extends Service {
     public void onCreate() {
         Log.i(TAG, "Starting upload service");
 
-        thread = new Thread(new UploadServiceRunnable(this));
+        runnable = new UploadServiceRunnable(this);
+        thread = new Thread(runnable);
         thread.setPriority(Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
     }
@@ -41,20 +42,29 @@ public class UploadService extends Service {
         if (!thread.isAlive()) {
             Log.e(TAG, "Thread is dead in onStartCommand!");
         }
-        // This just shoves the URIs in the concurrent queue and lets the thread handle it.
-        // The warning suppression is because only code in this app will supply this extra.
-        @SuppressWarnings("unchecked")
-        ArrayList<Uri> imageUris = (ArrayList<Uri>)intent.getSerializableExtra(EXTRA_URIS);
-        pendingUris.addAll(imageUris);
+
+        Log.v(TAG, "Got intent " + intent);
+        switch (intent.getAction()) {
+            case ACTION_UPLOAD:
+                // This just shoves the URIs in the concurrent queue and lets the thread handle it.
+                // The warning suppression is because only code in this app will supply this extra.
+                @SuppressWarnings("unchecked")
+                ArrayList<Uri> imageUris = (ArrayList<Uri>)intent.getSerializableExtra(EXTRA_URIS);
+                pendingUris.addAll(imageUris);
+                break;
+            case ACTION_CANCEL:
+                Log.e(TAG, "Cancelling!");
+                runnable.abort();
+                finish();
+                break;
+            default:
+        }
 
         return START_NOT_STICKY;
     }
 
     @Override
     public void onDestroy() {
-        if (thread.isAlive()) {
-            Log.e(TAG, "Thread is alive in onStartCommand!");
-        }
         if (pendingUris.size() > 0) {
             Log.e(TAG, "Upload service stopped with " + pendingUris.size() + " remaining!");
         } else {

@@ -86,6 +86,7 @@ public class UploadActivity extends Activity {
         // Make the intent with a pile of URIs.
         if (imageUris.size() > 0) {
             Intent i = new Intent(this, UploadService.class);
+            i.setAction(UploadService.ACTION_UPLOAD);
             i.putExtra(UploadService.EXTRA_URIS, (Serializable)imageUris);
             startService(i);
         }
