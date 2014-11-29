@@ -1,0 +1,9 @@
+This is a simple image uploader app for Android.
+
+It's meant to work with https://github.com/andrew-d/imagehost
+
+It is a work in progress! Feel free to report bugs or send pull requests.
+
+Note that the earliest supported version of Android is 4.1 (Jellybean). It could probably support earlier versions with the support library, but that has not yet been done.
+
+As for building it, it should just load into a properly-configured Eclipse and build as long as you have an Android SDK for 4.1 or later.
