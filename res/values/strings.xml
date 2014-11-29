@@ -24,12 +24,12 @@
         <item quantity="other">Uploading %d images!</item>
     </plurals>
     <string name="uploader_notification_uploading">Uploading image</string>
-    <string name="uploader_notification_quantity">Image %1$d of %2$d</string>
+    <string name="uploader_notification_quantity">Image %1$d of %2$d.</string>
 	<string name="uploader_notification_successful">Upload successful</string>
 	<string name="uploader_notification_failure">Upload failed</string>
-	<string name="uploader_failed_unauthorized">Wrong username or password</string>
-	<string name="uploader_failed_wrong_url">Upload URL is incorrect</string>
-	<string name="uploader_failed_generic">Server returned an error</string>
+	<string name="uploader_failed_unauthorized">Wrong username or password. Tap to fix.</string>
+	<string name="uploader_failed_wrong_url">URL might be wrong (error %1$d). Tap to fix.</string>
+	<string name="uploader_failed_generic">Please try your upload again.</string>
 
 	<string name="clipboardreceiver_copied">Copied image URL</string>
 	<string name="clipboardreceiver_label">Image URL</string>

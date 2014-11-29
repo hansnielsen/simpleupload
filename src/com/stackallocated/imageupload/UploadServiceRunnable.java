@@ -251,22 +251,29 @@ class UploadServiceRunnable implements Runnable {
     // Returns false if there was an error and further uploads should be aborted.
     private boolean handleUploadResponse(HttpResponse response, Uri uri, Builder notification) throws IllegalStateException, IOException {
         int statusCode = response.getStatusLine().getStatusCode();
-        switch (statusCode) {
-            case 401: // Unauthorized.
-                Log.e(UploadService.TAG, "Unauthorized for URL");
-                makeUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_unauthorized), true);
-                return false;
-            case 404: // Wrong URL.
+        if (statusCode == 200 || statusCode == 400) {
+            // Success or JSON error.
+            // Don't do anything.
+        } else if (statusCode == 401) {
+            // Unauthorized.
+            Log.e(UploadService.TAG, "Unauthorized for URL");
+            makeUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_unauthorized), true);
+            return false;
+        } else if (statusCode >= 500 && statusCode <= 599) {
+            // Some kind of weird server error. Probably transient.
+            Log.e(UploadService.TAG, "Got 500 response code " + statusCode);
+            makeUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_generic), false);
+            return false;
+        } else {
+            if (statusCode == 404) {
+                // Wrong URL.
                 Log.e(UploadService.TAG, "Got 404 for URL");
-                makeUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_wrong_url), true);
-                return false;
-            default: // Unknown response code.
+            } else {
+                // Garbage status code. URL must be wrong.
                 Log.e(UploadService.TAG, "Got unknown response code " + statusCode);
-                makeUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_generic), false);
-                return false;
-            case 200: // Success.
-            case 400: // Generic error, handled in JSON.
-                break;
+            }
+            makeUploadFailureNotification(notification, uri.toString(), res.getString(R.string.uploader_failed_wrong_url, statusCode), true);
+            return false;
         }
 
         JsonUploadResponse json = parseJsonResponse(response.getEntity().getContent());
