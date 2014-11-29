@@ -128,6 +128,7 @@ class UploadServiceRunnable implements Runnable {
     }
 
     public void run() {
+        int uploaded = 0;
         // Block on the first URI.
         Uri uri = null;
         try {
@@ -140,7 +141,9 @@ class UploadServiceRunnable implements Runnable {
         service.startForeground(UPLOAD_PROGRESS_NOTIFICATION, progressNotification.build());
 
         while (uri != null) {
-            resetUploadProgressNotification(progressNotification, uri.toString());
+            resetUploadProgressNotification(progressNotification,
+                                            uploaded + 1,
+                                            service.pendingUris.size() + uploaded + 1);
             nm.notify(UPLOAD_PROGRESS_NOTIFICATION, progressNotification.build());
 
             boolean status = handleUploadImage(uri, progressNotification);
@@ -149,6 +152,7 @@ class UploadServiceRunnable implements Runnable {
                 break;
             }
 
+            uploaded++;
             uri = service.pendingUris.poll();
         }
         nm.cancel(UPLOAD_PROGRESS_NOTIFICATION);
@@ -334,8 +338,10 @@ class UploadServiceRunnable implements Runnable {
         return builder;
     }
 
-    private void resetUploadProgressNotification(Builder notification, String string) {
-        notification.setContentText(string)
-                    .setProgress(100, 0, false);
+    private void resetUploadProgressNotification(Builder notification, int i, int n) {
+        notification.setProgress(100, 0, false);
+        if (n > 1) {
+            notification.setContentText(res.getString(R.string.uploader_notification_quantity, i, n));
+        }
     }
 }
